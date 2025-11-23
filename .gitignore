@@ -1,0 +1,21 @@
+# Node / npm
+node_modules/
+package-lock.json
+.npmrc
+
+# Build artefacts
+dist/
+.next/
+.vite/
+.cache/
+
+# Environment / secret keys
+.env
+.env.local
+.env.development
+.env.production
+
+# IDE / editor files
+.vscode/
+.DS_Store
+*.log

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PeruStyle - Diseña y Confecciona</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <!-- Tailwind Config (custom palette) -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#d8b646",
+                        "background-light": "#f8f7f6",
+                        "background-dark": "#0D0D0D",
+                        "panel-dark": "#1A1A1A",
+                        "sidebar-dark": "#111111",
+                        "accent-copper": "#B87333",
+                        "accent-gold": "#D4AF37",
+                        "text-beige": "#E7E0D8",
+                        "text-beige-muted": "#b6b1a0"
+                    },
+                    fontFamily: { "display": ["Manrope", "sans-serif"] },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                    boxShadow: { "gold-glow": "0 0 15px 0px rgba(212, 175, 55, 0.3)", "gold-glow-soft": "0 0 20px 0px rgba(212, 175, 55, 0.25)" }
+                }
+            }
+        };
+    </script>
+    <!-- PayPal SDK -->
+    <script
+        src="https://www.paypal.com/sdk/js?client-id=AT5cy3xCNp7j4EV2v4esQhHnxg8BIcjkcvVBGfXESOoxKI8UeB0dHd6p4XUAxo2gJ9Ns7jpNzpSOZrCB&currency=USD"></script>
+    <!-- Import map for Three.js -->
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+    </script>
+</head>
+
+<body class="antialiased bg-background-light dark:bg-background-dark font-display text-text-beige">
+    <div id="nav"></div>
+    <div id="app"></div>
+    <script type="module">
+        import { router } from './src/js/router.js';
+        document.addEventListener('DOMContentLoaded', () => router());
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</body>
+
+</html>
