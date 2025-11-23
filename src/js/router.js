@@ -8,6 +8,13 @@ import { PlansPage } from '../pages/plans.js';
 import { ProfilePage } from '../pages/profile.js';
 import { ClientDashboardPage } from '../pages/client-dashboard.js';
 import { MyDesignsPage } from '../pages/my-designs.js';
+import { MakerProfilePage } from '../pages/maker-profile.js';
+import { ChatPage } from '../pages/chat.js';
+import { MakerOrdersPage } from '../pages/maker-orders.js';
+import { MakerProfileEditPage } from '../pages/maker-profile-edit.js';
+import { MakerPortfolioPage } from '../pages/maker-portfolio.js';
+import { MakerPlansPage } from '../pages/maker-plans.js';
+import { NotificationsPage } from '../pages/notifications.js';
 import { Navbar } from '../components/navbar.js';
 
 const routes = {
@@ -16,7 +23,14 @@ const routes = {
     '/designer': DesignerPage,
     '/orders': OrdersPage,
     '/makers': MakersPage,
+    '/maker-profile': MakerProfilePage,
+    '/chat': ChatPage,
     '/maker-dashboard': MakerDashboardPage,
+    '/maker-orders': MakerOrdersPage,
+    '/maker-profile-edit': MakerProfileEditPage,
+    '/maker-portfolio': MakerPortfolioPage,
+    '/maker-plans': MakerPlansPage,
+    '/notifications': NotificationsPage,
     '/plans': PlansPage,
     '/profile': ProfilePage,
     '/client-dashboard': ClientDashboardPage,
@@ -33,17 +47,26 @@ export async function router() {
     };
 
     const render = async (path) => {
-        const view = routes[path] || routes['/'];
+        // Handle query params by stripping them for route matching
+        const cleanPath = path.split('?')[0];
+        const view = routes[cleanPath] || routes['/'];
 
         // Lista de rutas donde NO se debe mostrar el navbar (solo para usuarios autenticados)
         const dashboardRoutes = [
             '/client-dashboard',
             '/maker-dashboard',
+            '/maker-orders',
+            '/maker-profile-edit',
+            '/maker-portfolio',
+            '/maker-plans',
+            '/notifications',
             '/designer',
             '/my-designs',
             '/profile',
             '/orders',
-            '/chat'
+            '/chat',
+            '/makers',
+            '/maker-profile'
         ];
         const shouldShowNavbar = !dashboardRoutes.includes(path);
 

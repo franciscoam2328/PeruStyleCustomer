@@ -1,169 +1,177 @@
+import { getCurrentUser, signOut } from '../js/auth.js';
 import { supabase } from '../js/supabase.js';
-import { getCurrentUser } from '../js/auth.js';
 
-export async function ProfilePage() {
-    const user = await getCurrentUser();
-
-    if (!user) {
-        window.location.href = '/login';
-        return '';
-    }
-
-    // Fetch current profile data
-    const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-    if (error) {
-        return `<div class="pt-24 text-center text-red-500">Error al cargar perfil: ${error.message}</div>`;
-    }
-
-    setTimeout(() => {
-        const form = document.getElementById('profile-form');
-        const avatarInput = document.getElementById('avatar-input');
-        const avatarPreview = document.getElementById('avatar-preview');
-        const saveBtn = document.getElementById('save-profile-btn');
-        const messageDiv = document.getElementById('profile-message');
-
-        // Handle Avatar Preview
-        if (avatarInput) {
-            avatarInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        avatarPreview.src = e.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
+export function ProfilePage() {
+    setTimeout(async () => {
+        const user = await getCurrentUser();
+        if (!user) {
+            window.location.href = '/login';
+            return;
         }
 
-        // Handle Form Submit
-        if (form) {
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                saveBtn.disabled = true;
-                saveBtn.textContent = 'Guardando...';
-                messageDiv.textContent = '';
+        // Fetch profile data
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
 
-                const fullName = document.getElementById('full-name').value;
-                const bio = document.getElementById('bio').value;
-                const avatarFile = avatarInput.files[0];
-                let avatarUrl = profile.avatar_url;
+        // Update UI with user data
+        if (profile) {
+            const nameElements = document.querySelectorAll('.user-name');
+            const emailElements = document.querySelectorAll('.user-email');
+            const avatarElements = document.querySelectorAll('.user-avatar');
+            const planElements = document.querySelectorAll('.user-plan');
 
-                try {
-                    // Upload Avatar if changed
-                    if (avatarFile) {
-                        const fileExt = avatarFile.name.split('.').pop();
-                        const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-                        const filePath = `${fileName}`;
-
-                        const { error: uploadError } = await supabase.storage
-                            .from('avatars')
-                            .upload(filePath, avatarFile);
-
-                        if (uploadError) throw uploadError;
-
-                        const { data: { publicUrl } } = supabase.storage
-                            .from('avatars')
-                            .getPublicUrl(filePath);
-
-                        avatarUrl = publicUrl;
-                    }
-
-                    // Update Profile
-                    const { error: updateError } = await supabase
-                        .from('profiles')
-                        .update({
-                            full_name: fullName,
-                            bio: bio,
-                            avatar_url: avatarUrl
-                        })
-                        .eq('id', user.id);
-
-                    if (updateError) throw updateError;
-
-                    messageDiv.className = 'text-green-500 text-sm text-center mt-4';
-                    messageDiv.textContent = '¡Perfil actualizado correctamente!';
-                    setTimeout(() => window.location.reload(), 1500);
-
-                } catch (err) {
-                    console.error(err);
-                    messageDiv.className = 'text-red-500 text-sm text-center mt-4';
-                    messageDiv.textContent = 'Error al actualizar: ' + err.message;
-                } finally {
-                    saveBtn.disabled = false;
-                    saveBtn.textContent = 'Guardar Cambios';
-                }
+            nameElements.forEach(el => {
+                if (el.tagName === 'INPUT') el.value = profile.full_name || '';
+                else el.textContent = profile.full_name || 'Usuario';
             });
+            emailElements.forEach(el => {
+                if (el.tagName === 'INPUT') el.value = profile.email || user.email || '';
+                else el.textContent = profile.email || user.email || '';
+            });
+
+            if (profile.avatar_url) {
+                avatarElements.forEach(el => el.style.backgroundImage = `url('${profile.avatar_url}')`);
+            }
+
+            planElements.forEach(el => el.textContent = (profile.plan || 'Free').charAt(0).toUpperCase() + (profile.plan || 'free').slice(1));
         }
+
+        // Logout
+        document.getElementById('logout-btn')?.addEventListener('click', async () => {
+            await signOut();
+            window.location.href = '/login';
+        });
+
     }, 0);
 
     return `
-    <div class="pb-12 bg-base min-h-screen">
-        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <!-- Botón de regreso -->
-            <div class="mb-6">
-                <a href="${profile.role === 'maker' ? '/maker-dashboard' : '/client-dashboard'}" 
-                   class="inline-flex items-center gap-2 text-on-surface/80 hover:text-primary transition-colors">
-                    <span class="text-2xl">←</span>
-                    <span class="font-medium">Volver al Dashboard</span>
-                </a>
-            </div>
-
-            <div class="bg-surface rounded-xl shadow-lg overflow-hidden border border-white/10">
-                <div class="bg-gradient-to-r from-primary to-secondary h-32 w-full"></div>
-                <div class="px-8 pb-8">
-                    <div class="relative -mt-16 mb-6 flex justify-center">
-                        <div class="relative">
-                            <img id="avatar-preview" src="${profile.avatar_url || 'https://via.placeholder.com/150'}" 
-                                 class="h-32 w-32 rounded-full border-4 border-white bg-gray-200 object-cover shadow-md">
-                            <label for="avatar-input" class="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-lg cursor-pointer hover:bg-gray-100 transition border border-gray-200">
-                                📷
-                                <input type="file" id="avatar-input" accept="image/*" class="hidden">
-                            </label>
-                        </div>
+    <div class="relative flex min-h-screen w-full flex-col bg-background-light dark:bg-background-dark font-display text-text-dark-primary">
+        <div class="flex h-full flex-1">
+            <!-- SideNavBar -->
+            <aside class="flex w-64 flex-col gap-8 border-r border-border-dark/50 bg-surface-dark/30 p-4">
+                <div class="flex items-center gap-3 px-3">
+                    <span class="text-primary text-3xl font-black">P</span>
+                    <h1 class="text-text-dark-primary text-xl font-bold">PeruStyle</h1>
+                </div>
+                <nav class="flex h-full flex-col justify-between">
+                    <div class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-text-dark-secondary hover:bg-white/5 hover:text-secondary transition-colors" href="/client-dashboard">
+                            <span class="material-symbols-outlined">dashboard</span>
+                            <p class="text-sm font-medium">Dashboard / Inicio</p>
+                        </a>
+                        <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-text-dark-secondary hover:bg-white/5 hover:text-secondary transition-colors" href="/my-designs">
+                            <span class="material-symbols-outlined">design_services</span>
+                            <p class="text-sm font-medium">Mis Diseños</p>
+                        </a>
+                        <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-text-dark-secondary hover:bg-white/5 hover:text-secondary transition-colors" href="/orders">
+                            <span class="material-symbols-outlined">inventory_2</span>
+                            <p class="text-sm font-medium">Mis Pedidos</p>
+                        </a>
+                        <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-text-dark-secondary hover:bg-white/5 hover:text-secondary transition-colors" href="/makers">
+                            <span class="material-symbols-outlined">store</span>
+                            <p class="text-sm font-medium">Explorar</p>
+                        </a>
+                        <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-text-dark-secondary hover:bg-white/5 hover:text-secondary transition-colors" href="/chat">
+                            <span class="material-symbols-outlined">chat</span>
+                            <p class="text-sm font-medium">Chat</p>
+                        </a>
+                        <a class="group flex items-center gap-3 rounded-lg bg-primary/20 px-3 py-2 text-primary shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-colors" href="/profile">
+                            <span class="material-symbols-outlined fill">person</span>
+                            <p class="text-sm font-bold">Mi Perfil</p>
+                        </a>
+                        <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-text-dark-secondary hover:bg-white/5 hover:text-secondary transition-colors" href="/plans">
+                            <span class="material-symbols-outlined">credit_card</span>
+                            <p class="text-sm font-medium">Mi Suscripción</p>
+                        </a>
                     </div>
-
-                    <h1 class="text-3xl font-bold text-center text-on-surface mb-2">${profile.full_name || 'Usuario'}</h1>
-                    <p class="text-center text-on-surface/60 mb-8">${profile.email}</p>
-
-                    <form id="profile-form" class="space-y-6 max-w-lg mx-auto">
-                        <div>
-                            <label for="full-name" class="block text-sm font-medium text-on-surface/80">Nombre Completo</label>
-                            <input type="text" id="full-name" value="${profile.full_name || ''}" required
-                                   class="mt-1 block w-full bg-base border-white/10 text-on-surface rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-2 border">
-                        </div>
-
-                        <div>
-                            <label for="bio" class="block text-sm font-medium text-on-surface/80">Biografía / Sobre mí</label>
-                            <textarea id="bio" rows="4" 
-                                      class="mt-1 block w-full bg-base border-white/10 text-on-surface rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm p-2 border"
-                                      placeholder="Cuéntanos un poco sobre ti...">${profile.bio || ''}</textarea>
-                        </div>
-
-                        <div class="flex items-center justify-between pt-4">
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-surface border border-white/10 text-on-surface uppercase">
-                                Rol: ${profile.role}
-                            </span>
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-secondary/20 border border-secondary/30 text-secondary uppercase">
-                                Plan: ${profile.plan}
-                            </span>
-                        </div>
-
-                        <div>
-                            <button id="save-profile-btn" type="submit" 
-                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-black bg-primary hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition">
-                                Guardar Cambios
+                    <div class="flex flex-col">
+                        <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-text-dark-secondary hover:bg-white/5 hover:text-secondary transition-colors" href="/logout" id="logout-btn">
+                            <span class="material-symbols-outlined">logout</span>
+                            <p class="text-sm font-medium">Cerrar sesión</p>
+                        </a>
+                    </div>
+                </nav>
+            </aside>
+            <!-- Main Content -->
+            <main class="flex-1 overflow-y-auto">
+                <div class="p-8 md:p-12">
+                    <!-- PageHeading -->
+                    <header class="mb-10">
+                        <h2 class="text-text-dark-primary text-4xl font-black leading-tight tracking-[-0.033em]">Mi Perfil</h2>
+                        <p class="text-text-dark-secondary mt-1">Administra tu información personal y de contacto.</p>
+                    </header>
+                    <!-- ProfileHeader -->
+                    <section class="mb-12">
+                        <div class="flex w-full flex-col gap-6 rounded-xl border border-border-dark p-6 @container md:flex-row md:items-center md:justify-between glassmorphism">
+                            <div class="flex items-center gap-6">
+                                <div class="relative">
+                                    <div class="user-avatar bg-center bg-no-repeat aspect-square bg-cover rounded-full size-24 md:size-32" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDechkmMRFJNJzsjh3LrWZtzT5dvkdCMiluAY9Evgt4hDfzsxUcnMDRmzo3Ta2lU5V96JWlARHYxK2kAzCdTX0qsvH2bDPpR7I3GZ9HuSRR86y70OfjnZfZajDk7N6zPYW-BpKmWTcO2GQxjzYXryTrMzSBTCymaE1xha0NiwA_MrYN4RAsFw8NzCjMTWO1JkzLCYyRyNdEnNEaVDiuNzFkNDQcrDvkuV1rlepZXR49Px0hPavED0UXP1I8upipvXe3BL0-dCeRRtM");'></div>
+                                </div>
+                                <div class="flex flex-col justify-center">
+                                    <p class="user-name text-text-dark-primary text-[22px] font-bold leading-tight tracking-[-0.015em]">Cargando...</p>
+                                    <p class="text-text-dark-secondary text-base font-normal leading-normal">Cliente <span class="user-plan">Free</span></p>
+                                </div>
+                            </div>
+                            <button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-11 px-6 bg-surface-dark text-text-dark-primary border border-border-dark text-sm font-bold leading-normal tracking-[0.015em] transition-colors hover:bg-white/5 w-full @[480px]:w-auto">
+                                <span class="truncate">Cambiar foto</span>
                             </button>
                         </div>
-                        <div id="profile-message" class="h-4"></div>
-                    </form>
+                    </section>
+                    <!-- Profile Form -->
+                    <section>
+                        <form class="space-y-8">
+                            <div class="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2">
+                                <!-- Nombre Completo -->
+                                <div>
+                                    <label class="flex flex-col min-w-40 flex-1">
+                                        <p class="text-text-dark-secondary text-sm font-medium leading-normal pb-2">Nombre Completo</p>
+                                        <input class="user-name form-input-custom flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-dark-primary h-14 placeholder:text-text-dark-secondary p-[15px] text-base font-normal leading-normal" value=""/>
+                                    </label>
+                                </div>
+                                <!-- Correo Electrónico -->
+                                <div>
+                                    <label class="flex flex-col min-w-40 flex-1">
+                                        <p class="text-text-dark-secondary text-sm font-medium leading-normal pb-2">Correo Electrónico</p>
+                                        <input class="user-email form-input-custom flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-dark-primary h-14 placeholder:text-text-dark-secondary p-[15px] text-base font-normal leading-normal" value=""/>
+                                    </label>
+                                </div>
+                                <!-- Número de Teléfono -->
+                                <div>
+                                    <label class="flex flex-col min-w-40 flex-1">
+                                        <p class="text-text-dark-secondary text-sm font-medium leading-normal pb-2">Número de Teléfono</p>
+                                        <input class="form-input-custom flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-dark-primary h-14 placeholder:text-text-dark-secondary p-[15px] text-base font-normal leading-normal" value="+51 987 654 321"/>
+                                    </label>
+                                </div>
+                                <!-- Contraseña -->
+                                <div class="flex items-end">
+                                    <label class="flex flex-col min-w-40 flex-1">
+                                        <p class="text-text-dark-secondary text-sm font-medium leading-normal pb-2">Contraseña</p>
+                                        <input class="form-input-custom flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-dark-primary h-14 placeholder:text-text-dark-secondary p-[15px] text-base font-normal leading-normal" type="password" value="••••••••••••"/>
+                                    </label>
+                                    <button class="ml-4 flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-14 px-6 bg-surface-dark text-text-dark-primary border border-border-dark text-sm font-medium leading-normal tracking-[0.015em] transition-colors hover:bg-white/5" type="button">
+                                        <span class="truncate">Cambiar</span>
+                                    </button>
+                                </div>
+                                <!-- Dirección de Envío -->
+                                <div class="md:col-span-2">
+                                    <label class="flex flex-col min-w-40 flex-1">
+                                        <p class="text-text-dark-secondary text-sm font-medium leading-normal pb-2">Dirección de Envío</p>
+                                        <textarea class="form-input-custom flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-dark-primary min-h-28 placeholder:text-text-dark-secondary p-[15px] text-base font-normal leading-normal">Av. Larco 123, Miraflores, Lima, Perú</textarea>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="flex justify-end pt-4">
+                                <button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-8 bg-primary text-background-dark text-base font-bold leading-normal tracking-[0.015em] transition-transform hover:scale-105">
+                                    <span class="truncate">Guardar Cambios</span>
+                                </button>
+                            </div>
+                        </form>
+                    </section>
                 </div>
-            </div>
+            </main>
         </div>
     </div>
     `;
