@@ -41,9 +41,9 @@ export async function Navbar() {
                 </div>
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="/" class="text-gray-700 hover:text-primary transition" data-link>Inicio</a>
-                    <a href="/designer" class="text-gray-700 hover:text-primary transition" data-link>Diseñar</a>
-                    <a href="/makers" class="text-gray-700 hover:text-primary transition" data-link>Confeccionistas</a>
-                    <a href="/plans" class="text-gray-700 hover:text-primary transition" data-link>Planes</a>
+                    <a href="/#design-preview" class="text-gray-700 hover:text-primary transition" data-link>Diseñar</a>
+                    <a href="/#featured-makers" class="text-gray-700 hover:text-primary transition" data-link>Confeccionistas</a>
+                    <a href="/#pricing" class="text-gray-700 hover:text-primary transition" data-link>Planes</a>
                     ${authLink}
                 </div>
             </div>

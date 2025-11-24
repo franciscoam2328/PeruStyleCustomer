@@ -92,12 +92,18 @@ create policy "Makers can update orders assigned to them."
   on orders for update
   using ( auth.uid() = maker_id );
 
+create policy "Clients can update their own orders"
+  on orders for update
+  using ( auth.uid() = client_id );
+
 -- MESSAGES TABLE
 create table public.messages (
   id uuid default uuid_generate_v4() primary key,
   sender_id uuid references public.profiles(id) not null,
+
   receiver_id uuid references public.profiles(id) not null,
   content text not null,
+
   image_url text,
   is_read boolean default false,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null

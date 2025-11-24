@@ -47,8 +47,10 @@ export async function router() {
     };
 
     const render = async (path) => {
-        // Handle query params by stripping them for route matching
-        const cleanPath = path.split('?')[0];
+        // Handle query params and hash
+        const [pathWithoutQuery, queryString] = path.split('?');
+        const [cleanPath, hash] = pathWithoutQuery.split('#');
+
         const view = routes[cleanPath] || routes['/'];
 
         // Lista de rutas donde NO se debe mostrar el navbar (solo para usuarios autenticados)
@@ -68,7 +70,7 @@ export async function router() {
             '/makers',
             '/maker-profile'
         ];
-        const shouldShowNavbar = !dashboardRoutes.includes(path);
+        const shouldShowNavbar = !dashboardRoutes.includes(cleanPath);
 
         // Mostrar u ocultar navbar según la ruta
         if (navContainer) {
@@ -81,6 +83,27 @@ export async function router() {
 
         app.innerHTML = await view();
 
+        // Handle Hash Scrolling
+        if (hash) {
+            setTimeout(() => {
+                const element = document.getElementById(hash);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 100);
+        } else if (path.includes('#')) {
+            // Fallback if hash was in the second part of split (e.g. /#id)
+            const actualHash = path.split('#')[1];
+            if (actualHash) {
+                setTimeout(() => {
+                    const element = document.getElementById(actualHash);
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }, 100);
+            }
+        }
+
         // Re-attach event listeners for links
         document.querySelectorAll('[data-link]').forEach(link => {
             link.addEventListener('click', e => {
@@ -91,9 +114,9 @@ export async function router() {
     };
 
     window.addEventListener('popstate', () => {
-        render(location.pathname);
+        render(location.pathname + location.hash);
     });
 
     // Initial render
-    render(location.pathname);
+    render(location.pathname + location.hash);
 }

@@ -89,6 +89,7 @@ export function MakersPage() {
 
         // Map real data to display format
         const mappedMakers = makers.map(m => ({
+            id: m.id,
             full_name: m.full_name || 'Confeccionista',
             specialty: m.bio ? m.bio.split('.')[0] : 'General',
             rating: (Math.random() * 1.5 + 3.5).toFixed(1), // Mock rating

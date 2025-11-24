@@ -57,7 +57,7 @@ export function OrdersPage() {
             'accepted': { label: 'Aceptado', color: 'status-accepted', bg: 'bg-status-accepted' },
             'in_progress': { label: 'En proceso', color: 'status-processing', bg: 'bg-status-processing' },
             'review': { label: 'En Revisión', color: 'status-processing', bg: 'bg-purple-500' },
-            'finished': { label: 'Finalizado', color: 'status-finished', bg: 'bg-status-finished' },
+            'completed': { label: 'Finalizado', color: 'status-finished', bg: 'bg-status-finished' },
             'cancelled': { label: 'Cancelado', color: 'red-500', bg: 'bg-red-500' }
         };
 
@@ -82,7 +82,7 @@ export function OrdersPage() {
                     <button class="filter-chip flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary px-4 text-white text-sm font-semibold leading-normal transition-colors" data-status="all">Todos</button>
                     <button class="filter-chip flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-card-dark px-4 text-text-beige hover:bg-primary/20 text-sm font-medium leading-normal transition-colors" data-status="pending">Pendiente</button>
                     <button class="filter-chip flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-card-dark px-4 text-text-beige hover:bg-primary/20 text-sm font-medium leading-normal transition-colors" data-status="in_progress">En proceso</button>
-                    <button class="filter-chip flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-card-dark px-4 text-text-beige hover:bg-primary/20 text-sm font-medium leading-normal transition-colors" data-status="finished">Finalizado</button>
+                    <button class="filter-chip flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-card-dark px-4 text-text-beige hover:bg-primary/20 text-sm font-medium leading-normal transition-colors" data-status="completed">Finalizado</button>
                 </div>
 
                 <!-- Grid -->
@@ -234,7 +234,7 @@ export function OrdersPage() {
             // Update order status to 'finished'
             const { error } = await supabase
                 .from('orders')
-                .update({ status: 'finished' })
+                .update({ status: 'completed' })
                 .eq('id', order.id);
 
             if (error) {
@@ -311,7 +311,7 @@ export function OrdersPage() {
         const container = document.getElementById('main-content');
         if (!container) return;
 
-        const statusSteps = ['pending', 'accepted', 'in_progress', 'review', 'finished'];
+        const statusSteps = ['pending', 'accepted', 'in_progress', 'shipped', 'completed'];
         const currentStepIndex = statusSteps.indexOf(order.status);
         const progressWidth = Math.max(5, (currentStepIndex / (statusSteps.length - 1)) * 100);
 
@@ -346,7 +346,7 @@ export function OrdersPage() {
                                 <p class="text-sm text-text-beige-muted">Confeccionista</p>
                                 <p class="text-white font-bold text-sm">${maker.full_name}</p>
                             </div>
-                            <a href="/chat?recipient=${order.maker_id}" class="ml-2 w-8 h-8 rounded-full bg-accent-gold text-black flex items-center justify-center hover:scale-110 transition-transform">
+                            <a href="/chat?recipient_id=${order.maker_id}" class="ml-2 w-8 h-8 rounded-full bg-accent-gold text-black flex items-center justify-center hover:scale-110 transition-transform">
                                 <span class="material-symbols-outlined text-lg">chat</span>
                             </a>
                         </div>
@@ -517,7 +517,7 @@ export function OrdersPage() {
     }
 
     function renderActionButtons(order) {
-        if (order.status === 'review') {
+        if (order.status === 'shipped') {
             return `
                 <div class="flex flex-col gap-3">
                     <button id="btn-accept-design" class="w-full py-3 rounded-lg bg-green-500 text-white font-bold hover:bg-green-600 transition-colors shadow-lg shadow-green-500/20 flex items-center justify-center gap-2">
@@ -530,7 +530,7 @@ export function OrdersPage() {
                     </button>
                 </div>
             `;
-        } else if (order.status === 'finished') {
+        } else if (order.status === 'completed') {
             return `
                 <div class="flex flex-col gap-3">
                     <div class="p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-center">
@@ -546,7 +546,7 @@ export function OrdersPage() {
                 <div class="p-4 bg-white/5 rounded-lg text-center">
                     <p class="text-gray-400 text-sm">Esperando acciones del confeccionista.</p>
                 </div>
-                <a href="/chat?recipient=${order.maker_id}" class="mt-3 w-full py-2 rounded-lg bg-primary/10 text-primary font-bold hover:bg-primary/20 transition-colors flex items-center justify-center gap-2 text-sm">
+                <a href="/chat?recipient_id=${order.maker_id}" class="mt-3 w-full py-2 rounded-lg bg-primary/10 text-primary font-bold hover:bg-primary/20 transition-colors flex items-center justify-center gap-2 text-sm">
                     <span class="material-symbols-outlined text-lg">chat</span>
                     Enviar Mensaje
                 </a>
@@ -559,8 +559,8 @@ export function OrdersPage() {
             'pending': 'Pendiente',
             'accepted': 'Aceptado',
             'in_progress': 'En Proceso',
-            'review': 'En Revisión',
-            'finished': 'Finalizado',
+            'shipped': 'En Revisión',
+            'completed': 'Finalizado',
             'cancelled': 'Cancelado'
         };
         return map[status] || status;

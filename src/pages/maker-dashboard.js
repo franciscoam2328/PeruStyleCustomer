@@ -229,7 +229,7 @@ export async function MakerDashboardPage() {
                         <div class="bg-gradient-to-br from-accent-gold/20 to-accent-copper/10 rounded-xl p-6 border border-accent-gold/20">
                             <h3 class="text-white font-bold mb-2">Mejora tu Plan</h3>
                             <p class="text-sm text-text-beige-muted mb-4">Accede a herramientas avanzadas y destaca en el directorio.</p>
-                            <button class="w-full py-2 rounded-lg bg-accent-gold text-black font-bold hover:bg-accent-gold/90 transition-colors text-sm">
+                            <button class="w-full py-2 rounded-lg bg-accent-gold text-black font-bold hover:bg-accent-gold/90 transition-colors text-sm" onclick="window.location.href='/maker-plans'">
                                 Ver Planes
                             </button>
                         </div>

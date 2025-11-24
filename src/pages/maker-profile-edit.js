@@ -124,6 +124,10 @@ function renderSidebar(profile) {
                     <span class="material-symbols-outlined text-xl">chat</span>
                     Mensajes
                 </a>
+                <a class="flex items-center gap-4 rounded-lg px-4 py-2.5 text-sm font-medium text-text-beige-muted transition-all hover:text-accent-gold hover:bg-white/5" href="/maker-plans">
+                    <span class="material-symbols-outlined text-xl">credit_card</span>
+                    Suscripción
+                </a>
             </div>
         </div>
         <div class="flex flex-col gap-1">

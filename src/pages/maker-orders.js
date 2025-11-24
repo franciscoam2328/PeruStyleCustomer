@@ -30,7 +30,7 @@ async function renderMakerOrderList(user) {
 
     const pendingOrders = orders.filter(o => o.status === 'pending');
     const activeOrders = orders.filter(o => ['accepted', 'in_progress', 'review'].includes(o.status));
-    const finishedOrders = orders.filter(o => ['finished', 'cancelled'].includes(o.status));
+    const finishedOrders = orders.filter(o => ['completed', 'cancelled'].includes(o.status));
 
     // Tab Logic (Client-side simple toggle)
     window.switchTab = (tabName) => {
@@ -73,7 +73,7 @@ async function renderMakerOrderList(user) {
                     ${renderOrderCards(activeOrders, 'active')}
                 </div>
                 <div id="tab-finished" class="tab-content hidden space-y-4">
-                    ${renderOrderCards(finishedOrders, 'finished')}
+                    ${renderOrderCards(finishedOrders, 'completed')}
                 </div>
             </div>
         </main>
@@ -304,6 +304,10 @@ function renderSidebar(profile) {
                     <span class="material-symbols-outlined text-xl">chat</span>
                     Mensajes
                 </a>
+                <a class="flex items-center gap-4 rounded-lg px-4 py-2.5 text-sm font-medium text-text-beige-muted transition-all hover:text-accent-gold hover:bg-white/5" href="/maker-plans">
+                    <span class="material-symbols-outlined text-xl">credit_card</span>
+                    Suscripción
+                </a>
             </div>
         </div>
         <div class="flex flex-col gap-1">
@@ -339,19 +343,19 @@ function renderMakerActions(order) {
                     <span class="material-symbols-outlined">send</span>
                     Enviar a Revisión Final
                 </button>
-                <a href="/chat?recipient=${order.client_id}" class="w-full py-3 rounded-lg bg-primary/10 text-primary font-bold hover:bg-primary/20 transition-colors border border-primary/20 flex items-center justify-center gap-2">
+                <a href="/chat?recipient_id=${order.client_id}" class="w-full py-3 rounded-lg bg-primary/10 text-primary font-bold hover:bg-primary/20 transition-colors border border-primary/20 flex items-center justify-center gap-2">
                     <span class="material-symbols-outlined">chat</span>
                     Chat con Cliente
                 </a>
             </div>
         `;
-    } else if (order.status === 'review') {
+    } else if (order.status === 'shipped') {
         return `
             <div class="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-center">
                 <p class="text-yellow-500 font-bold mb-2">Esperando al Cliente</p>
                 <p class="text-xs text-gray-400">El cliente está revisando tu entrega final.</p>
             </div>
-            <a href="/chat?recipient=${order.client_id}" class="mt-3 w-full py-3 rounded-lg bg-primary/10 text-primary font-bold hover:bg-primary/20 transition-colors border border-primary/20 flex items-center justify-center gap-2">
+            <a href="/chat?recipient_id=${order.client_id}" class="mt-3 w-full py-3 rounded-lg bg-primary/10 text-primary font-bold hover:bg-primary/20 transition-colors border border-primary/20 flex items-center justify-center gap-2">
                 <span class="material-symbols-outlined">chat</span>
                 Chat con Cliente
             </a>
@@ -366,7 +370,7 @@ function renderMakerActions(order) {
 }
 
 function renderTimeline(status) {
-    const steps = ['pending', 'accepted', 'in_progress', 'review', 'finished'];
+    const steps = ['pending', 'accepted', 'in_progress', 'shipped', 'completed'];
     const currentIdx = steps.indexOf(status);
     const progress = Math.max(5, (currentIdx / (steps.length - 1)) * 100);
 
@@ -480,7 +484,7 @@ function setupMakerModals(order) {
     });
 
     document.getElementById('confirm-final')?.addEventListener('click', async () => {
-        const { error } = await supabase.from('orders').update({ status: 'review' }).eq('id', order.id);
+        const { error } = await supabase.from('orders').update({ status: 'shipped' }).eq('id', order.id);
         if (!error) window.location.reload();
     });
 }
@@ -490,8 +494,8 @@ function getStatusColor(status) {
         'pending': 'bg-yellow-500/20 text-yellow-500',
         'accepted': 'bg-blue-500/20 text-blue-500',
         'in_progress': 'bg-purple-500/20 text-purple-500',
-        'review': 'bg-orange-500/20 text-orange-500',
-        'finished': 'bg-green-500/20 text-green-500',
+        'shipped': 'bg-orange-500/20 text-orange-500',
+        'completed': 'bg-green-500/20 text-green-500',
         'cancelled': 'bg-red-500/20 text-red-500'
     };
     return map[status] || 'bg-gray-500/20 text-gray-500';
@@ -502,8 +506,8 @@ function getStatusLabel(status) {
         'pending': 'Pendiente',
         'accepted': 'Aceptado',
         'in_progress': 'En Proceso',
-        'review': 'Revisión',
-        'finished': 'Finalizado',
+        'shipped': 'En Revisión',
+        'completed': 'Finalizado',
         'cancelled': 'Cancelado'
     };
     return map[status] || status;

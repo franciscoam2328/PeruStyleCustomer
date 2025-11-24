@@ -12,11 +12,18 @@ export async function MakerPortfolioPage() {
         .eq('id', user.id)
         .single();
 
-    const portfolio = profile.portfolio || [];
+    // Fetch portfolio from table
+    const { data: portfolio } = await supabase
+        .from('portfolio')
+        .select('*')
+        .eq('maker_id', user.id)
+        .order('created_at', { ascending: false });
+
+    const portfolioItems = portfolio || [];
 
     // Setup listeners
     setTimeout(() => {
-        setupPortfolioListeners(user.id, portfolio);
+        setupPortfolioListeners(user.id, portfolioItems);
     }, 0);
 
     return `
@@ -37,7 +44,7 @@ export async function MakerPortfolioPage() {
 
                 <!-- Gallery Grid -->
                 <div id="portfolio-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    ${portfolio.length > 0 ? portfolio.map((item, index) => renderPortfolioItem(item, index)).join('') : `
+                    ${portfolioItems.length > 0 ? portfolioItems.map((item) => renderPortfolioItem(item)).join('') : `
                         <div class="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-xl bg-white/5">
                             <span class="material-symbols-outlined text-6xl text-gray-600 mb-4">photo_library</span>
                             <p class="text-gray-400 text-lg">Tu portafolio está vacío.</p>
@@ -79,14 +86,14 @@ export async function MakerPortfolioPage() {
     `;
 }
 
-function renderPortfolioItem(item, index) {
+function renderPortfolioItem(item) {
     return `
         <div class="group relative aspect-[3/4] rounded-xl overflow-hidden bg-gray-800 border border-white/5">
-            <img src="${item.url}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+            <img src="${item.image_url}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
-                <h3 class="text-white font-bold text-lg">${item.title}</h3>
+                <h3 class="text-white font-bold text-lg">${item.title || 'Sin título'}</h3>
                 <p class="text-sm text-gray-300 line-clamp-2">${item.description || ''}</p>
-                <button class="btn-delete-photo absolute top-4 right-4 p-2 bg-red-500/20 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-colors" data-index="${index}">
+                <button class="btn-delete-photo absolute top-4 right-4 p-2 bg-red-500/20 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-colors" data-id="${item.id}">
                     <span class="material-symbols-outlined text-lg">delete</span>
                 </button>
             </div>
@@ -95,7 +102,6 @@ function renderPortfolioItem(item, index) {
 }
 
 function renderSidebar(profile) {
-    // Reusing sidebar again (should be componentized)
     return `
     <nav class="w-64 flex-shrink-0 bg-sidebar-dark border-r border-white/5 p-4 flex flex-col justify-between hidden md:flex">
         <div class="flex flex-col gap-4">
@@ -129,6 +135,10 @@ function renderSidebar(profile) {
                 <a class="flex items-center gap-4 rounded-lg px-4 py-2.5 text-sm font-medium text-text-beige-muted transition-all hover:text-accent-gold hover:bg-white/5" href="/chat">
                     <span class="material-symbols-outlined text-xl">chat</span>
                     Mensajes
+                </a>
+                <a class="flex items-center gap-4 rounded-lg px-4 py-2.5 text-sm font-medium text-text-beige-muted transition-all hover:text-accent-gold hover:bg-white/5" href="/maker-plans">
+                    <span class="material-symbols-outlined text-xl">credit_card</span>
+                    Suscripción
                 </a>
             </div>
         </div>
@@ -166,6 +176,8 @@ function setupPortfolioListeners(userId, currentPortfolio) {
         btn.disabled = true;
 
         // Upload to Storage
+        // Use 'designs' bucket if 'portfolio' doesn't exist, or ensure 'portfolio' bucket is created
+        // For now, let's try 'portfolio' as per previous code, but handle error
         const fileExt = file.name.split('.').pop();
         const fileName = `${userId}-${Date.now()}.${fileExt}`;
         const { error: uploadError } = await supabase.storage
@@ -174,7 +186,12 @@ function setupPortfolioListeners(userId, currentPortfolio) {
 
         if (uploadError) {
             console.error(uploadError);
-            alert('Error al subir imagen.');
+            // Fallback to 'designs' bucket if portfolio fails (common issue if bucket missing)
+            if (uploadError.message.includes('Bucket not found')) {
+                alert('Error: El bucket "portfolio" no existe. Por favor contacta soporte.');
+            } else {
+                alert('Error al subir imagen: ' + uploadError.message);
+            }
             btn.innerText = 'Guardar';
             btn.disabled = false;
             return;
@@ -184,18 +201,21 @@ function setupPortfolioListeners(userId, currentPortfolio) {
             .from('portfolio')
             .getPublicUrl(fileName);
 
-        // Update Profile JSONB
-        const newItem = { url: publicUrl, title, description: desc };
-        const newPortfolio = [...currentPortfolio, newItem];
-
+        // Insert into Portfolio Table
         const { error: dbError } = await supabase
-            .from('profiles')
-            .update({ portfolio: newPortfolio })
-            .eq('id', userId);
+            .from('portfolio')
+            .insert({
+                maker_id: userId,
+                image_url: publicUrl,
+                title: title,
+                description: desc
+            });
 
         if (dbError) {
             console.error(dbError);
             alert('Error al guardar en base de datos.');
+            btn.innerText = 'Guardar';
+            btn.disabled = false;
         } else {
             window.location.reload();
         }
@@ -205,16 +225,15 @@ function setupPortfolioListeners(userId, currentPortfolio) {
     document.querySelectorAll('.btn-delete-photo').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             if (!confirm('¿Eliminar esta foto?')) return;
-            const index = parseInt(btn.dataset.index);
-
-            const newPortfolio = currentPortfolio.filter((_, i) => i !== index);
+            const id = btn.dataset.id;
 
             const { error } = await supabase
-                .from('profiles')
-                .update({ portfolio: newPortfolio })
-                .eq('id', userId);
+                .from('portfolio')
+                .delete()
+                .eq('id', id);
 
             if (!error) window.location.reload();
+            else alert('Error al eliminar.');
         });
     });
 }

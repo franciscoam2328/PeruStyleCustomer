@@ -47,8 +47,8 @@ export function ChatPage() {
                 .from('messages')
                 .select(`
                     *,
-                    sender:sender_id(id, full_name, avatar_url),
-                    receiver:receiver_id(id, full_name, avatar_url)
+                    sender:profiles!sender_id(id, full_name, avatar_url),
+                    receiver:profiles!receiver_id(id, full_name, avatar_url)
                 `)
                 .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
                 .order('created_at', { ascending: false });
@@ -92,18 +92,26 @@ export function ChatPage() {
             conversations = Array.from(convMap.values());
 
             // If starting a new chat with someone not in list
+            console.log('Recipient ID from URL:', recipientId);
+
             if (recipientId && !convMap.has(recipientId)) {
+                console.log('Fetching recipient profile for:', recipientId);
                 // Fetch recipient details
-                const { data: recipient } = await supabase
+                const { data: recipient, error: recipientError } = await supabase
                     .from('profiles')
                     .select('*')
                     .eq('id', recipientId)
                     .single();
 
+                if (recipientError) {
+                    console.error('Error fetching recipient:', recipientError);
+                }
+
                 if (recipient) {
+                    console.log('Recipient found:', recipient);
                     const newConv = {
                         id: recipient.id,
-                        name: recipient.full_name,
+                        name: recipient.full_name || 'Usuario',
                         avatar: recipient.avatar_url || 'https://via.placeholder.com/150',
                         lastMessage: 'Nuevo chat',
                         time: '',
@@ -113,15 +121,22 @@ export function ChatPage() {
                     };
                     conversations.unshift(newConv);
                     activeChatUser = newConv;
+                } else {
+                    console.warn('Recipient not found in profiles.');
                 }
             } else if (recipientId && convMap.has(recipientId)) {
+                console.log('Recipient already in conversations.');
                 activeChatUser = convMap.get(recipientId);
             } else if (conversations.length > 0) {
                 activeChatUser = conversations[0];
             }
 
             renderConversations();
-            if (activeChatUser) renderChat();
+            if (activeChatUser) {
+                renderChat();
+            } else {
+                console.log('No active chat user set.');
+            }
         }
 
         function renderConversations() {
@@ -176,15 +191,15 @@ export function ChatPage() {
                             ${chat.online ? '<div class="absolute bottom-0 right-0 size-3.5 rounded-full bg-green-500 border-2 border-p-panel"></div>' : ''}
                         </div>
                         <div>
-                            <h2 class="text-lg font-semibold text-a-beige">${chat.name}</h2>
-                            <p class="text-sm ${chat.online ? 'text-green-400' : 'text-a-gray'}">${chat.online ? 'En línea' : 'Desconectado'}</p>
+                            <h2 class="text-lg font-semibold text-white">${chat.name}</h2>
+                            <p class="text-sm ${chat.online ? 'text-green-400' : 'text-gray-400'}">${chat.online ? 'En línea' : 'Desconectado'}</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-4 text-a-gray">
-                        <button class="p-2 rounded-full hover:bg-white/10 hover:text-a-beige">
+                    <div class="flex items-center gap-4 text-gray-400">
+                        <button class="p-2 rounded-full hover:bg-white/10 hover:text-white">
                             <span class="material-symbols-outlined">call</span>
                         </button>
-                        <button class="p-2 rounded-full hover:bg-white/10 hover:text-a-beige">
+                        <button class="p-2 rounded-full hover:bg-white/10 hover:text-white">
                             <span class="material-symbols-outlined">more_vert</span>
                         </button>
                     </div>
@@ -199,18 +214,18 @@ export function ChatPage() {
                         return `
                             <div class="flex items-end gap-3 max-w-lg">
                                 <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-8 shrink-0" style='background-image: url("${chat.avatar}");'></div>
-                                <div class="rounded-xl rounded-bl-none bg-[#333333] px-4 py-3">
-                                    <p class="text-sm text-a-beige">${m.text}</p>
-                                    <span class="text-xs text-a-gray/70 float-right ml-2 mt-1">${m.time}</span>
+                                <div class="rounded-xl rounded-bl-none bg-[#2A2A2A] border border-white/10 px-4 py-3">
+                                    <p class="text-sm text-white">${m.text}</p>
+                                    <span class="text-xs text-gray-500 float-right ml-2 mt-1">${m.time}</span>
                                 </div>
                             </div>
                         `;
                     } else {
                         return `
                             <div class="flex items-end gap-3 self-end max-w-lg">
-                                <div class="rounded-xl rounded-br-none bg-a-copper ${m.image ? 'p-2' : 'px-4 py-3'} shadow-[0_4px_15px_rgba(184,115,51,0.2)]">
-                                    ${m.image ? `<img alt="Image" class="rounded-lg h-48 w-auto" src="${m.image}"/>` : `<p class="text-sm text-p-base">${m.text}</p>`}
-                                    <span class="text-xs text-p-base/70 float-right ml-2 mt-1">${m.time}</span>
+                                <div class="rounded-xl rounded-br-none bg-orange-600 px-4 py-3 shadow-lg">
+                                    ${m.image ? `<img alt="Image" class="rounded-lg h-48 w-auto" src="${m.image}"/>` : `<p class="text-sm text-white font-medium">${m.text}</p>`}
+                                    <span class="text-xs text-white/70 float-right ml-2 mt-1">${m.time}</span>
                                 </div>
                             </div>
                         `;
@@ -299,35 +314,35 @@ export function ChatPage() {
                 <div class="flex-1 overflow-y-auto">
                     <!-- ListItems -->
                     <div class="flex flex-col" id="conversation-list">
-                        <!-- Injected via JS -->
-                        <div class="p-4 text-center text-a-gray">Cargando conversaciones...</div>
+                            <span class="material-symbols-outlined">send</span>
+                        </button>
                     </div>
                 </div>
             </div>
             <!-- B. Right Panel (Main Chat) -->
-            <div class="flex flex-1 flex-col bg-p-panel bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDi8hc93X9PWfkm3xt4JaVQuUuUWY3ITw1wgzfMbEc1z58iBL4ZPWnPg8XpDTMpYH5IscRk8GLpAfeNE5D9gq1WfRoEr8kJWm3yz389SnF-gbI-Udn0yfoeKyfcpGl-XeUlYad8dJlJ8aEA9o7aNeydd83oxC17ZLGk-YqdBcrKRfgmZz_uk6pvBOFALBefquNqlp6KZ1ROa5KIJL3j7RLP7yo07c8QmM34YPGuNZvYx606qT4uo1BWjZwtHg0mr_lc4WD2GSg8rvU');">
+            <div class="flex flex-1 flex-col bg-[#1F1F1F] relative">
                 <!-- Chat Header -->
-                <header class="flex items-center justify-between border-b border-white/10 bg-p-panel/80 px-6 py-4 backdrop-blur-sm" id="chat-header">
+                <header class="flex items-center justify-between border-b border-white/10 bg-[#1F1F1F] px-6 py-4" id="chat-header">
                     <!-- Injected via JS -->
                 </header>
                 <!-- Message Area -->
                 <div class="flex-1 overflow-y-auto p-6">
                     <div class="flex flex-col gap-4" id="chat-messages">
                          <!-- Injected via JS -->
-                         <div class="flex flex-col items-center justify-center h-full text-a-gray">
+                         <div class="flex flex-col items-center justify-center h-full text-gray-500">
                             <span class="material-symbols-outlined text-6xl mb-4">chat</span>
                             <p>Selecciona una conversación para empezar.</p>
                          </div>
                     </div>
                 </div>
                 <!-- Message Input -->
-                <div class="mt-auto bg-p-panel/80 p-4 backdrop-blur-sm">
+                <div class="mt-auto bg-[#1F1F1F] p-4 border-t border-white/10">
                     <div class="flex items-center gap-4">
-                        <button class="p-2 rounded-full text-a-gray hover:bg-white/10 hover:text-a-beige">
+                        <button class="p-2 rounded-full text-gray-400 hover:bg-white/10 hover:text-white">
                             <span class="material-symbols-outlined">add</span>
                         </button>
-                        <input id="message-input" class="flex-1 rounded-lg border-none bg-[#333333] px-4 py-3 text-sm text-a-beige placeholder-a-gray focus:ring-1 focus:ring-a-copper" placeholder="Escribe un mensaje..." type="text"/>
-                        <button id="send-btn" class="flex items-center justify-center size-11 rounded-full bg-a-copper text-p-base shadow-[0_0_15px_rgba(184,115,51,0.4)] hover:bg-a-gold transition-colors">
+                        <input id="message-input" class="flex-1 rounded-lg border-none bg-[#2A2A2A] px-4 py-3 text-sm text-white placeholder-gray-500 focus:ring-1 focus:ring-orange-500" placeholder="Escribe un mensaje..." type="text"/>
+                        <button id="send-btn" class="flex items-center justify-center size-11 rounded-full bg-orange-600 text-white shadow-lg hover:bg-orange-500 transition-colors">
                             <span class="material-symbols-outlined">send</span>
                         </button>
                     </div>
