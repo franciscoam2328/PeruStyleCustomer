@@ -92,6 +92,10 @@ export async function MakerDashboardPage() {
                         <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">person</span>
                         <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Mi Perfil</p>
                     </a>
+                    <a href="/maker-portfolio" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                        <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">photo_library</span>
+                        <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Portafolio</p>
+                    </a>
                     <a href="/chat" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
                         <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">chat_bubble_outline</span>
                         <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Chat</p>

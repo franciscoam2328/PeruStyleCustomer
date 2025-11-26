@@ -1,5 +1,6 @@
 import { supabase } from '../js/supabase.js';
-import { getCurrentUser } from '../js/auth.js';
+import { getCurrentUser, signOut } from '../js/auth.js';
+import { getLogo } from '../components/logo.js';
 
 export async function MakerPortfolioPage() {
     const user = await getCurrentUser();
@@ -24,31 +25,92 @@ export async function MakerPortfolioPage() {
     // Setup listeners
     setTimeout(() => {
         setupPortfolioListeners(user.id, portfolioItems);
+
+        // Logout handler
+        document.getElementById('logout-btn')?.addEventListener('click', async () => {
+            await signOut();
+            window.location.href = '/login';
+        });
     }, 0);
 
     return `
-    <div class="flex min-h-screen w-full bg-background-dark font-display text-text-beige">
-        ${renderSidebar(profile)}
+    <div class="flex min-h-screen w-full bg-base font-display text-on-surface">
+        <!-- Sidebar -->
+        <aside class="w-64 flex-shrink-0 bg-base border-r border-surface/50 p-4 flex flex-col justify-between hidden md:flex sticky top-0 h-screen z-20">
+            <div class="flex flex-col gap-8">
+                <div class="px-3 flex justify-center">
+                    <a href="/maker-dashboard">
+                        ${getLogo({ width: "160", height: "45" })}
+                    </a>
+                </div>
+                
+                <nav class="flex flex-col gap-2">
+                    <a href="/maker-dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                        <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">dashboard</span>
+                        <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Dashboard</p>
+                    </a>
+                    <a href="/maker-orders" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                        <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">inventory_2</span>
+                        <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Pedidos</p>
+                    </a>
+                    <a href="/maker-profile" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                        <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">person</span>
+                        <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Mi Perfil</p>
+                    </a>
+                    <a href="/maker-portfolio" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-surface hover:bg-primary/20 transition-colors duration-200 group">
+                        <span class="material-symbols-outlined text-xl group-hover:text-primary transition-colors">photo_library</span>
+                        <p class="text-on-surface text-sm font-medium">Portafolio</p>
+                    </a>
+                    <a href="/chat" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                        <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">chat_bubble_outline</span>
+                        <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Chat</p>
+                    </a>
+                    <a href="/maker-plans" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                        <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">workspace_premium</span>
+                        <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Mi Suscripción</p>
+                    </a>
+                </nav>
+            </div>
+            <div class="flex flex-col gap-1">
+                <button id="logout-btn" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group text-left w-full">
+                    <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-red-500 transition-colors">logout</span>
+                    <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Cerrar sesión</p>
+                </button>
+            </div>
+        </aside>
+
         <main class="flex-1 p-8 overflow-y-auto">
             <div class="max-w-6xl mx-auto">
-                <div class="flex justify-between items-center mb-8">
+                <!-- Header -->
+                <header class="flex justify-between items-center mb-8 bg-surface p-4 rounded-xl border border-white/10 shadow-sm">
                     <div>
-                        <h1 class="text-3xl font-black text-white mb-2">Mi Portafolio</h1>
-                        <p class="text-text-beige-muted">Muestra tus mejores trabajos para atraer clientes.</p>
+                        <h1 class="text-3xl font-black text-on-surface mb-1">Mi Portafolio</h1>
+                        <p class="text-on-surface/60">Muestra tus mejores trabajos para atraer clientes.</p>
                     </div>
-                    <button id="btn-add-photo" class="px-6 py-3 rounded-lg bg-accent-gold text-black font-bold hover:bg-accent-gold/90 transition-colors flex items-center gap-2">
-                        <span class="material-symbols-outlined">add_a_photo</span>
-                        Subir Foto
-                    </button>
-                </div>
+                    <div class="flex items-center gap-6">
+                        <button id="btn-add-photo" class="px-6 py-3 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 transition-colors flex items-center gap-2 shadow-lg shadow-primary/20">
+                            <span class="material-symbols-outlined">add_a_photo</span>
+                            Subir Foto
+                        </button>
+                        <div class="flex items-center gap-3 border-l border-white/10 pl-6">
+                            <div class="bg-gradient-to-br from-primary to-secondary rounded-full w-10 h-10 flex items-center justify-center text-white font-bold shadow-md overflow-hidden">
+                                ${profile.avatar_url ? `<img src="${profile.avatar_url}" class="w-full h-full object-cover">` : (profile.full_name || 'M')[0].toUpperCase()}
+                            </div>
+                            <div class="flex flex-col text-right hidden sm:flex">
+                                <h2 class="text-base font-semibold text-on-surface leading-tight">${profile.full_name || 'Confeccionista'}</h2>
+                                <p class="text-primary text-sm font-medium leading-tight uppercase">Plan ${profile.plan || 'Free'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </header>
 
                 <!-- Gallery Grid -->
                 <div id="portfolio-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     ${portfolioItems.length > 0 ? portfolioItems.map((item) => renderPortfolioItem(item)).join('') : `
-                        <div class="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-xl bg-white/5">
-                            <span class="material-symbols-outlined text-6xl text-gray-600 mb-4">photo_library</span>
-                            <p class="text-gray-400 text-lg">Tu portafolio está vacío.</p>
-                            <p class="text-sm text-gray-500">Sube fotos de tus confecciones pasadas.</p>
+                        <div class="col-span-full py-20 text-center border-2 border-dashed border-white/10 rounded-xl bg-surface">
+                            <span class="material-symbols-outlined text-6xl text-on-surface/40 mb-4">photo_library</span>
+                            <p class="text-on-surface/60 text-lg">Tu portafolio está vacío.</p>
+                            <p class="text-sm text-on-surface/40">Sube fotos de tus confecciones pasadas.</p>
                         </div>
                     `}
                 </div>
@@ -56,27 +118,27 @@ export async function MakerPortfolioPage() {
 
             <!-- Upload Modal -->
             <div id="modal-upload" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden backdrop-blur-sm">
-                <div class="bg-card-dark p-6 rounded-xl border border-white/10 max-w-md w-full">
-                    <h3 class="text-xl font-bold text-white mb-4">Agregar al Portafolio</h3>
+                <div class="bg-surface p-6 rounded-xl border border-white/10 max-w-md w-full shadow-2xl">
+                    <h3 class="text-xl font-bold text-on-surface mb-4">Agregar al Portafolio</h3>
                     
                     <div class="mb-4">
-                        <label class="block text-sm font-bold text-gray-400 mb-2">Foto</label>
-                        <input type="file" id="portfolio-file" accept="image/*" class="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-white">
+                        <label class="block text-sm font-bold text-on-surface/60 mb-2">Foto</label>
+                        <input type="file" id="portfolio-file" accept="image/*" class="w-full bg-base border border-white/10 rounded-lg p-2 text-on-surface">
                     </div>
 
                     <div class="mb-4">
-                        <label class="block text-sm font-bold text-gray-400 mb-2">Título</label>
-                        <input type="text" id="portfolio-title" class="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-accent-gold outline-none" placeholder="Ej: Vestido de Gala Rojo">
+                        <label class="block text-sm font-bold text-on-surface/60 mb-2">Título</label>
+                        <input type="text" id="portfolio-title" class="w-full bg-base border border-white/10 rounded-lg p-3 text-on-surface focus:border-primary outline-none transition-colors" placeholder="Ej: Vestido de Gala Rojo">
                     </div>
 
                     <div class="mb-6">
-                        <label class="block text-sm font-bold text-gray-400 mb-2">Descripción (Opcional)</label>
-                        <textarea id="portfolio-desc" rows="2" class="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white focus:border-accent-gold outline-none"></textarea>
+                        <label class="block text-sm font-bold text-on-surface/60 mb-2">Descripción (Opcional)</label>
+                        <textarea id="portfolio-desc" rows="2" class="w-full bg-base border border-white/10 rounded-lg p-3 text-on-surface focus:border-primary outline-none transition-colors"></textarea>
                     </div>
 
                     <div class="flex justify-end gap-3">
-                        <button class="close-modal px-4 py-2 text-gray-400 hover:text-white">Cancelar</button>
-                        <button id="submit-upload" class="px-6 py-2 bg-accent-gold text-black rounded-lg font-bold hover:bg-accent-gold/90">Guardar</button>
+                        <button class="close-modal px-4 py-2 text-on-surface/60 hover:text-on-surface transition-colors">Cancelar</button>
+                        <button id="submit-upload" class="px-6 py-2 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">Guardar</button>
                     </div>
                 </div>
             </div>
@@ -88,7 +150,7 @@ export async function MakerPortfolioPage() {
 
 function renderPortfolioItem(item) {
     return `
-        <div class="group relative aspect-[3/4] rounded-xl overflow-hidden bg-gray-800 border border-white/5">
+        <div class="group relative aspect-[3/4] rounded-xl overflow-hidden bg-surface border border-white/10">
             <img src="${item.image_url}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
                 <h3 class="text-white font-bold text-lg">${item.title || 'Sin título'}</h3>
@@ -98,57 +160,6 @@ function renderPortfolioItem(item) {
                 </button>
             </div>
         </div>
-    `;
-}
-
-function renderSidebar(profile) {
-    return `
-    <nav class="w-64 flex-shrink-0 bg-sidebar-dark border-r border-white/5 p-4 flex flex-col justify-between hidden md:flex">
-        <div class="flex flex-col gap-4">
-            <div class="flex items-center gap-3 p-2">
-                <div class="w-10 h-10 rounded-full bg-accent-gold/20 flex items-center justify-center overflow-hidden border border-accent-gold/30">
-                    ${profile.avatar_url ? `<img src="${profile.avatar_url}" class="w-full h-full object-cover">` : '<span class="material-symbols-outlined text-accent-gold">checkroom</span>'}
-                </div>
-                <div class="flex flex-col">
-                    <h1 class="text-white text-sm font-bold leading-normal">${profile.full_name || 'Confeccionista'}</h1>
-                    <p class="text-accent-gold text-xs font-medium uppercase tracking-wider">${profile.plan || 'Free'}</p>
-                </div>
-            </div>
-            <div class="flex flex-col gap-1">
-                <a class="flex items-center gap-4 rounded-lg px-4 py-2.5 text-sm font-medium text-text-beige-muted transition-all hover:text-accent-gold hover:bg-white/5" href="/maker-dashboard">
-                    <span class="material-symbols-outlined text-xl">dashboard</span>
-                    Dashboard
-                </a>
-                <a class="flex items-center gap-4 rounded-lg px-4 py-2.5 text-sm font-medium text-text-beige-muted transition-all hover:text-accent-gold hover:bg-white/5" href="/maker-orders">
-                    <span class="material-symbols-outlined text-xl">inventory_2</span>
-                    Pedidos
-                </a>
-                <a class="flex items-center gap-4 rounded-lg px-4 py-2.5 text-sm font-medium text-text-beige-muted transition-all hover:text-accent-gold hover:bg-white/5" href="/maker-profile-edit">
-                    <span class="material-symbols-outlined text-xl">person_edit</span>
-                    Mi Perfil
-                </a>
-                <a class="relative flex items-center gap-4 rounded-lg bg-accent-gold/10 px-4 py-2.5 text-sm font-bold text-accent-gold shadow-gold-glow-soft" href="/maker-portfolio">
-                    <span class="absolute left-0 h-6 w-1 rounded-r-full bg-accent-gold"></span>
-                    <span class="material-symbols-outlined text-xl">photo_library</span>
-                    Portafolio
-                </a>
-                <a class="flex items-center gap-4 rounded-lg px-4 py-2.5 text-sm font-medium text-text-beige-muted transition-all hover:text-accent-gold hover:bg-white/5" href="/chat">
-                    <span class="material-symbols-outlined text-xl">chat</span>
-                    Mensajes
-                </a>
-                <a class="flex items-center gap-4 rounded-lg px-4 py-2.5 text-sm font-medium text-text-beige-muted transition-all hover:text-accent-gold hover:bg-white/5" href="/maker-plans">
-                    <span class="material-symbols-outlined text-xl">credit_card</span>
-                    Suscripción
-                </a>
-            </div>
-        </div>
-        <div class="flex flex-col gap-1">
-            <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors text-text-beige-muted hover:text-accent-copper" href="/logout" id="logout-btn">
-                <span class="material-symbols-outlined">logout</span>
-                <p class="text-sm font-medium leading-normal">Cerrar sesión</p>
-            </a>
-        </div>
-    </nav>
     `;
 }
 
