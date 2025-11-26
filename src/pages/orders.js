@@ -152,6 +152,13 @@ export function OrdersPage() {
             .eq('id', orderId)
             .single();
 
+        // Fetch updates
+        const { data: updates } = await supabase
+            .from('order_updates')
+            .select('*')
+            .eq('order_id', orderId)
+            .order('created_at', { ascending: false });
+
         if (error || !order) {
             container.innerHTML = '<p class="text-red-500">Pedido no encontrado.</p>';
             return;
@@ -177,7 +184,7 @@ export function OrdersPage() {
                     <p class="text-on-surface/60">ID: ${order.id}</p>
                 </div>
                 ${order.status === 'completed' ? `
-                    <button class="px-6 py-2 bg-primary text-white font-bold rounded-lg shadow-lg shadow-primary/20 hover:bg-primary/90 transition-colors">
+                    <button id="btn-rate-service" class="px-6 py-2 bg-primary text-white font-bold rounded-lg shadow-lg shadow-primary/20 hover:bg-primary/90 transition-colors">
                         Calificar Servicio
                     </button>
                 ` : ''}
@@ -282,11 +289,265 @@ export function OrdersPage() {
                                 Esperando cotización del confeccionista
                             </div>
                         ` : ''}
+
+                        ${order.status === 'accepted' && order.payment_status === 'unpaid' ? `
+                            <div class="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg mb-4">
+                                <p class="text-blue-400 text-sm font-bold mb-1">Cotización Recibida</p>
+                                <p class="text-on-surface/80 text-xs mb-3">El confeccionista ha fijado el precio. Paga el 50% de adelanto para iniciar.</p>
+                                <div class="flex justify-between text-sm mb-3 font-bold">
+                                    <span class="text-on-surface">Adelanto (50%)</span>
+                                    <span class="text-primary">S/ ${(order.price / 2).toFixed(2)}</span>
+                                </div>
+                                <button id="btn-pay-advance" class="w-full py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
+                                    Pagar Adelanto
+                                </button>
+                            </div>
+                        ` : ''}
+
+                        ${order.status === 'shipped' ? `
+                            <div class="p-4 bg-green-500/10 border border-green-500/20 rounded-lg mb-4">
+                                <p class="text-green-500 text-sm font-bold mb-1">Entrega Final Lista</p>
+                                <p class="text-on-surface/80 text-xs mb-3">El confeccionista ha enviado el pedido final. Paga el 50% restante para completar la orden.</p>
+                                <div class="flex justify-between text-sm mb-3 font-bold">
+                                    <span class="text-on-surface">Restante (50%)</span>
+                                    <span class="text-primary">S/ ${(order.price / 2).toFixed(2)}</span>
+                                </div>
+                                <button id="btn-pay-final" class="w-full py-2 rounded-lg bg-green-500 text-white font-bold hover:bg-green-600 transition-colors shadow-lg shadow-green-500/20">
+                                    Pagar y Finalizar
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Updates Section -->
+            <div class="mt-8">
+                <h2 class="text-2xl font-bold text-on-surface mb-6">Avances del Proyecto</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    ${updates && updates.length > 0 ? updates.map(u => `
+                        <div class="bg-surface border border-white/10 rounded-xl p-6 shadow-lg hover:border-primary/30 transition-colors">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary flex-shrink-0">
+                                    <span class="material-symbols-outlined">history_edu</span>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h4 class="font-bold text-on-surface">Avance del Confeccionista</h4>
+                                        <span class="text-xs text-on-surface/40 bg-base px-2 py-1 rounded-full border border-white/5">${new Date(u.created_at).toLocaleString()}</span>
+                                    </div>
+                                    <p class="text-on-surface/80 text-sm mb-4 leading-relaxed">${u.content}</p>
+                                    ${u.image_url ? `
+                                        <div class="rounded-lg overflow-hidden border border-white/10 bg-base">
+                                            <img src="${u.image_url}" class="w-full h-48 object-cover hover:scale-105 transition-transform duration-500">
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('') : `
+                        <div class="col-span-2 flex flex-col items-center justify-center py-12 border-2 border-dashed border-white/10 rounded-xl bg-surface/50">
+                            <span class="material-symbols-outlined text-4xl text-on-surface/40 mb-2">image_not_supported</span>
+                            <p class="text-on-surface/60">El confeccionista aún no ha subido avances.</p>
+                        </div>
+                    `}
+                </div>
+            </div>
+
+            <!-- PayPal Modal (Simulated) -->
+            <div id="paypal-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden backdrop-blur-sm">
+                <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl transform transition-all scale-100">
+                    <div class="mb-6 flex flex-col items-center justify-center border-b border-gray-200 pb-4">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" class="h-8 mb-2">
+                        <span class="text-sm text-gray-500 font-medium">Pago Seguro</span>
+                    </div>
+                    <h3 class="mb-4 text-center text-lg font-bold text-gray-900">S/ <span id="modal-amount">0.00</span></h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="mb-1 block text-sm font-medium text-gray-700">Correo electrónico</label>
+                            <input type="email" id="paypal-email" class="w-full rounded-md border border-gray-300 p-3 text-black focus:border-[#0070BA] focus:ring-1 focus:ring-[#0070BA] focus:outline-none transition-colors" placeholder="nombre@ejemplo.com">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-sm font-medium text-gray-700">Contraseña</label>
+                            <input type="password" id="paypal-password" class="w-full rounded-md border border-gray-300 p-3 text-black focus:border-[#0070BA] focus:ring-1 focus:ring-[#0070BA] focus:outline-none transition-colors" placeholder="••••••••">
+                        </div>
+                        <button id="paypal-submit-btn" class="w-full rounded-full bg-[#0070BA] py-3 font-bold text-white hover:bg-[#005ea6] transition-colors shadow-md hover:shadow-lg">
+                            Pagar Ahora
+                        </button>
+                        <button id="paypal-cancel-btn" class="w-full rounded-full py-3 font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors">
+                            Cancelar
+                        </button>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <p class="text-xs text-gray-400">Esta es una simulación. No ingrese credenciales reales.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rating Modal -->
+            <div id="rating-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden backdrop-blur-sm">
+                <div class="bg-surface p-6 rounded-xl border border-white/10 max-w-md w-full text-center shadow-2xl">
+                    <h3 class="text-xl font-bold text-on-surface mb-2">Calificar Servicio</h3>
+                    <p class="text-on-surface/60 text-sm mb-6">¿Qué te pareció el trabajo del confeccionista?</p>
+                    
+                    <div class="flex justify-center gap-2 mb-6">
+                        <button class="star-btn text-3xl text-on-surface/20 hover:text-yellow-500 transition-colors" data-value="1">★</button>
+                        <button class="star-btn text-3xl text-on-surface/20 hover:text-yellow-500 transition-colors" data-value="2">★</button>
+                        <button class="star-btn text-3xl text-on-surface/20 hover:text-yellow-500 transition-colors" data-value="3">★</button>
+                        <button class="star-btn text-3xl text-on-surface/20 hover:text-yellow-500 transition-colors" data-value="4">★</button>
+                        <button class="star-btn text-3xl text-on-surface/20 hover:text-yellow-500 transition-colors" data-value="5">★</button>
+                    </div>
+
+                    <textarea id="rating-comment" rows="3" class="w-full bg-base border border-white/10 rounded-lg p-3 text-on-surface mb-6 focus:border-primary outline-none" placeholder="Escribe un comentario..."></textarea>
+
+                    <div class="flex gap-3">
+                        <button id="close-rating-modal" class="flex-1 py-2 text-on-surface/60 hover:text-on-surface">Cancelar</button>
+                        <button id="submit-rating" class="flex-1 py-2 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 shadow-lg shadow-primary/20">Enviar Calificación</button>
                     </div>
                 </div>
             </div>
         </div>
         `;
+
+        // Attach Payment Listeners immediately after rendering
+        setTimeout(() => {
+            const modal = document.getElementById('paypal-modal');
+            const ratingModal = document.getElementById('rating-modal');
+            const btnRate = document.getElementById('btn-rate-service');
+            const btnCloseRating = document.getElementById('close-rating-modal');
+            const btnSubmitRating = document.getElementById('submit-rating');
+            const starBtns = document.querySelectorAll('.star-btn');
+            let currentRating = 0;
+
+            // Rating Logic
+            if (btnRate) {
+                btnRate.onclick = () => ratingModal.classList.remove('hidden');
+            }
+
+            if (btnCloseRating) {
+                btnCloseRating.onclick = () => ratingModal.classList.add('hidden');
+            }
+
+            if (starBtns) {
+                starBtns.forEach(btn => {
+                    btn.onclick = () => {
+                        currentRating = btn.dataset.value;
+                        updateStars(currentRating);
+                    };
+                });
+            }
+
+            function updateStars(rating) {
+                starBtns.forEach(btn => {
+                    if (btn.dataset.value <= rating) {
+                        btn.classList.remove('text-on-surface/20');
+                        btn.classList.add('text-yellow-500');
+                    } else {
+                        btn.classList.add('text-on-surface/20');
+                        btn.classList.remove('text-yellow-500');
+                    }
+                });
+            }
+
+            if (btnSubmitRating) {
+                btnSubmitRating.onclick = async () => {
+                    if (currentRating === 0) return alert('Por favor selecciona una calificación');
+
+                    const comment = document.getElementById('rating-comment').value;
+
+                    btnSubmitRating.innerText = 'Enviando...';
+                    btnSubmitRating.disabled = true;
+
+                    // Save rating to database
+                    const { error } = await supabase
+                        .from('ratings')
+                        .insert({
+                            order_id: order.id,
+                            maker_id: order.maker_id,
+                            client_id: order.client_id,
+                            rating: parseInt(currentRating),
+                            comment: comment || null
+                        });
+
+                    if (!error) {
+                        alert('¡Gracias por tu calificación!');
+                        ratingModal.classList.add('hidden');
+                        btnSubmitRating.innerText = 'Enviar Calificación';
+                        btnSubmitRating.disabled = false;
+                    } else {
+                        console.error('Error saving rating:', error);
+                        alert('Error al guardar la calificación. Por favor intenta de nuevo.');
+                        btnSubmitRating.innerText = 'Enviar Calificación';
+                        btnSubmitRating.disabled = false;
+                    }
+                };
+            }
+
+            const btnPayAdvance = document.getElementById('btn-pay-advance');
+            const btnPayFinal = document.getElementById('btn-pay-final');
+            const btnCancel = document.getElementById('paypal-cancel-btn');
+            const btnSubmit = document.getElementById('paypal-submit-btn');
+
+            // Payment Logic
+            let isFinalPayment = false;
+
+            if (btnPayAdvance) {
+                btnPayAdvance.onclick = () => {
+                    isFinalPayment = false;
+                    document.getElementById('modal-amount').textContent = (order.price / 2).toFixed(2);
+                    modal.classList.remove('hidden');
+                };
+            }
+
+            if (btnPayFinal) {
+                btnPayFinal.onclick = () => {
+                    isFinalPayment = true;
+                    document.getElementById('modal-amount').textContent = (order.price / 2).toFixed(2);
+                    modal.classList.remove('hidden');
+                };
+            }
+
+            if (btnCancel) {
+                btnCancel.onclick = () => modal.classList.add('hidden');
+            }
+
+            if (btnSubmit) {
+                btnSubmit.onclick = async () => {
+                    const email = document.getElementById('paypal-email').value;
+                    const pass = document.getElementById('paypal-password').value;
+
+                    if (!email || !pass) return alert('Ingrese credenciales simuladas');
+
+                    btnSubmit.innerText = 'Procesando...';
+                    btnSubmit.disabled = true;
+
+                    setTimeout(async () => {
+                        const updateData = isFinalPayment ? {
+                            status: 'completed',
+                            payment_status: 'paid'
+                        } : {
+                            status: 'in_progress',
+                            payment_status: 'paid',
+                            paypal_order_id: 'MOCK-' + Date.now()
+                        };
+
+                        const { error } = await supabase
+                            .from('orders')
+                            .update(updateData)
+                            .eq('id', order.id);
+
+                        if (!error) {
+                            alert(isFinalPayment ? '¡Pedido completado! Gracias por tu compra.' : '¡Pago exitoso! El confeccionista iniciará el trabajo.');
+                            window.location.reload();
+                        } else {
+                            alert('Error al procesar pago');
+                            btnSubmit.innerText = 'Pagar Ahora';
+                            btnSubmit.disabled = false;
+                        }
+                    }, 2000);
+                };
+            }
+        }, 100);
     }
 
     return `

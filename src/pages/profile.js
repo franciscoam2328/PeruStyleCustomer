@@ -45,6 +45,100 @@ export function ProfilePage() {
             window.location.href = '/login';
         });
 
+        // Avatar Upload
+        const btnChangePhoto = document.getElementById('btn-change-photo');
+        const avatarInput = document.createElement('input');
+        avatarInput.type = 'file';
+        avatarInput.accept = 'image/*';
+        avatarInput.style.display = 'none';
+        document.body.appendChild(avatarInput);
+
+        if (btnChangePhoto) {
+            btnChangePhoto.onclick = () => avatarInput.click();
+        }
+
+        avatarInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Show loading state
+            btnChangePhoto.disabled = true;
+            btnChangePhoto.innerHTML = '<span class="truncate">Subiendo...</span>';
+
+            try {
+                // Upload to Supabase Storage
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('avatars')
+                    .upload(fileName, file, { upsert: true });
+
+                if (uploadError) throw uploadError;
+
+                // Get public URL
+                const { data: { publicUrl } } = supabase.storage
+                    .from('avatars')
+                    .getPublicUrl(fileName);
+
+                // Update profile with new avatar URL
+                const { error: updateError } = await supabase
+                    .from('profiles')
+                    .update({ avatar_url: publicUrl })
+                    .eq('id', user.id);
+
+                if (updateError) throw updateError;
+
+                // Update UI
+                document.querySelectorAll('.user-avatar').forEach(el => {
+                    el.style.backgroundImage = `url('${publicUrl}')`;
+                });
+
+                alert('Foto actualizada correctamente');
+            } catch (error) {
+                console.error('Error uploading avatar:', error);
+                alert('Error al subir la foto. Por favor intenta de nuevo.');
+            } finally {
+                btnChangePhoto.disabled = false;
+                btnChangePhoto.innerHTML = '<span class="truncate">Cambiar foto</span>';
+            }
+        };
+
+        // Save Profile Changes
+        const btnSaveProfile = document.getElementById('btn-save-profile');
+        if (btnSaveProfile) {
+            btnSaveProfile.onclick = async (e) => {
+                e.preventDefault();
+
+                const fullName = document.querySelector('input.user-name').value;
+                const phone = document.getElementById('profile-phone').value;
+                const address = document.getElementById('profile-address').value;
+
+                btnSaveProfile.disabled = true;
+                btnSaveProfile.innerHTML = '<span class="truncate">Guardando...</span>';
+
+                try {
+                    const { error } = await supabase
+                        .from('profiles')
+                        .update({
+                            full_name: fullName,
+                            phone: phone,
+                            address: address
+                        })
+                        .eq('id', user.id);
+
+                    if (error) throw error;
+
+                    alert('Cambios guardados correctamente');
+                } catch (error) {
+                    console.error('Error saving profile:', error);
+                    alert('Error al guardar los cambios. Por favor intenta de nuevo.');
+                } finally {
+                    btnSaveProfile.disabled = false;
+                    btnSaveProfile.innerHTML = '<span class="truncate">Guardar Cambios</span>';
+                }
+            };
+        }
+
     }, 0);
 
     return `
@@ -115,7 +209,7 @@ export function ProfilePage() {
                                     <p class="text-text-dark-secondary text-base font-normal leading-normal">Cliente <span class="user-plan">Free</span></p>
                                 </div>
                             </div>
-                            <button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-11 px-6 bg-surface-dark text-text-dark-primary border border-border-dark text-sm font-bold leading-normal tracking-[0.015em] transition-colors hover:bg-white/5 w-full @[480px]:w-auto">
+                            <button id="btn-change-photo" class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-11 px-6 bg-surface-dark text-text-dark-primary border border-border-dark text-sm font-bold leading-normal tracking-[0.015em] transition-colors hover:bg-white/5 w-full @[480px]:w-auto">
                                 <span class="truncate">Cambiar foto</span>
                             </button>
                         </div>
@@ -142,7 +236,7 @@ export function ProfilePage() {
                                 <div>
                                     <label class="flex flex-col min-w-40 flex-1">
                                         <p class="text-text-dark-secondary text-sm font-medium leading-normal pb-2">Número de Teléfono</p>
-                                        <input class="form-input-custom flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-dark-primary h-14 placeholder:text-text-dark-secondary p-[15px] text-base font-normal leading-normal" value="+51 987 654 321"/>
+                                        <input id="profile-phone" class="form-input-custom flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-dark-primary h-14 placeholder:text-text-dark-secondary p-[15px] text-base font-normal leading-normal" value="+51 987 654 321"/>
                                     </label>
                                 </div>
                                 <!-- Contraseña -->
@@ -159,12 +253,12 @@ export function ProfilePage() {
                                 <div class="md:col-span-2">
                                     <label class="flex flex-col min-w-40 flex-1">
                                         <p class="text-text-dark-secondary text-sm font-medium leading-normal pb-2">Dirección de Envío</p>
-                                        <textarea class="form-input-custom flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-dark-primary min-h-28 placeholder:text-text-dark-secondary p-[15px] text-base font-normal leading-normal">Av. Larco 123, Miraflores, Lima, Perú</textarea>
+                                        <textarea id="profile-address" class="form-input-custom flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-dark-primary min-h-28 placeholder:text-text-dark-secondary p-[15px] text-base font-normal leading-normal">Av. Larco 123, Miraflores, Lima, Perú</textarea>
                                     </label>
                                 </div>
                             </div>
                             <div class="flex justify-end pt-4">
-                                <button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-8 bg-primary text-background-dark text-base font-bold leading-normal tracking-[0.015em] transition-transform hover:scale-105">
+                                <button id="btn-save-profile" type="button" class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-8 bg-primary text-background-dark text-base font-bold leading-normal tracking-[0.015em] transition-transform hover:scale-105">
                                     <span class="truncate">Guardar Cambios</span>
                                 </button>
                             </div>

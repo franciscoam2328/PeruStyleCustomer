@@ -362,18 +362,32 @@ function renderSidebar(profile, pendingCount = 0) {
 function renderMakerActions(order) {
     if (order.status === 'pending') {
         return `
-    < div class="flex flex-col gap-3" >
+            <div class="flex flex-col gap-3">
                 <button id="btn-accept" class="w-full py-3 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
                     Aceptar Pedido
                 </button>
                 <button id="btn-reject" class="w-full py-3 rounded-lg bg-red-500/10 text-red-500 font-bold hover:bg-red-500/20 transition-colors border border-red-500/20">
                     Rechazar
                 </button>
-            </div >
+            </div>
     `;
-    } else if (['accepted', 'in_progress', 'corrections'].includes(order.status)) {
+    } else if (order.status === 'accepted') {
         return `
-    < div class="flex flex-col gap-3" >
+            <div class="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg text-center">
+                <p class="text-blue-400 font-bold mb-2">Cotización Enviada</p>
+                <p class="text-xs text-on-surface/60">Esperando el pago del adelanto por parte del cliente.</p>
+                <div class="mt-2 text-sm font-bold text-on-surface">
+                    Total: S/ ${order.price}
+                </div>
+            </div>
+            <a href="/chat?recipient_id=${order.client_id}" class="mt-3 w-full py-3 rounded-lg bg-primary/10 text-primary font-bold hover:bg-primary/20 transition-colors border border-primary/20 flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">chat</span>
+                Chat con Cliente
+            </a>
+        `;
+    } else if (['in_progress', 'corrections'].includes(order.status)) {
+        return `
+            <div class="flex flex-col gap-3">
                 <button id="btn-upload-update" class="w-full py-3 rounded-lg bg-white/10 text-on-surface font-bold hover:bg-white/20 transition-colors border border-white/10 flex items-center justify-center gap-2">
                     <span class="material-symbols-outlined">cloud_upload</span>
                     Subir Avance
@@ -386,14 +400,14 @@ function renderMakerActions(order) {
                     <span class="material-symbols-outlined">chat</span>
                     Chat con Cliente
                 </a>
-            </div >
-    `;
+            </div>
+        `;
     } else if (order.status === 'shipped') {
         return `
-    < div class="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-center" >
+            <div class="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-center">
                 <p class="text-yellow-500 font-bold mb-2">Esperando al Cliente</p>
                 <p class="text-xs text-on-surface/60">El cliente está revisando tu entrega final.</p>
-            </div >
+            </div>
     <a href="/chat?recipient_id=${order.client_id}" class="mt-3 w-full py-3 rounded-lg bg-primary/10 text-primary font-bold hover:bg-primary/20 transition-colors border border-primary/20 flex items-center justify-center gap-2">
         <span class="material-symbols-outlined">chat</span>
         Chat con Cliente
@@ -401,9 +415,9 @@ function renderMakerActions(order) {
 `;
     } else {
         return `
-    < div class="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-center" >
-        <p class="text-green-500 font-bold">Pedido Finalizado</p>
-            </div >
+            <div class="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-center">
+                <p class="text-green-500 font-bold">Pedido Finalizado</p>
+            </div>
     `;
     }
 }
@@ -414,7 +428,7 @@ function renderTimeline(status) {
     const progress = Math.max(5, (currentIdx / (steps.length - 1)) * 100);
 
     return `
-    < div class="relative pt-4 pb-2" >
+        <div class="relative pt-4 pb-2">
             <div class="absolute top-1/2 left-0 w-full h-1 bg-white/10 -translate-y-1/2 rounded-full"></div>
             <div class="absolute top-1/2 left-0 h-1 bg-primary -translate-y-1/2 rounded-full transition-all duration-1000" style="width: ${progress}%"></div>
             <div class="relative flex justify-between">
@@ -425,26 +439,35 @@ function renderTimeline(status) {
                     </div>
                 `).join('')}
             </div>
-        </div >
+        </div>
     `;
 }
 
 function renderMakerModals() {
     return `
-    < !--Accept Modal-- >
+        <!--Quote Modal (Accept)-->
         <div id="modal-accept" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden backdrop-blur-sm">
             <div class="bg-surface p-6 rounded-xl border border-white/10 max-w-md w-full text-center shadow-2xl">
-                <span class="material-symbols-outlined text-4xl text-green-500 mb-4">check_circle</span>
-                <h3 class="text-xl font-bold text-on-surface mb-2">¿Aceptar este pedido?</h3>
-                <p class="text-on-surface/60 text-sm mb-6">Al aceptar, te comprometes a iniciar el trabajo. El cliente será notificado.</p>
+                <span class="material-symbols-outlined text-4xl text-green-500 mb-4">payments</span>
+                <h3 class="text-xl font-bold text-on-surface mb-2">Cotizar y Aceptar Pedido</h3>
+                <p class="text-on-surface/60 text-sm mb-6">Ingresa el costo total del servicio. El cliente deberá pagar el 50% de adelanto para iniciar.</p>
+                
+                <div class="mb-6 text-left">
+                    <label class="block text-xs text-on-surface/60 mb-2 font-bold uppercase">Precio Total (S/.)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface/60">S/.</span>
+                        <input type="number" id="quote-price" class="w-full bg-base border border-white/10 rounded-lg p-3 pl-10 text-on-surface focus:border-primary outline-none font-bold text-lg" placeholder="0.00">
+                    </div>
+                </div>
+
                 <div class="flex gap-3">
                     <button class="close-modal flex-1 py-2 text-on-surface/60 hover:text-on-surface">Cancelar</button>
-                    <button id="confirm-accept" class="flex-1 py-2 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 shadow-lg shadow-green-500/20">Sí, Aceptar</button>
+                    <button id="confirm-accept" class="flex-1 py-2 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 shadow-lg shadow-green-500/20">Enviar Cotización</button>
                 </div>
             </div>
         </div>
 
-        <!--Upload Update Modal-- >
+        <!--Upload Update Modal-->
         <div id="modal-update" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden backdrop-blur-sm">
             <div class="bg-surface p-6 rounded-xl border border-white/10 max-w-lg w-full shadow-2xl">
                 <h3 class="text-xl font-bold text-on-surface mb-4">Subir Avance</h3>
@@ -460,19 +483,19 @@ function renderMakerModals() {
             </div>
         </div>
 
-        <!--Final Review Modal-- >
-    <div id="modal-final" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden backdrop-blur-sm">
-        <div class="bg-surface p-6 rounded-xl border border-white/10 max-w-md w-full text-center shadow-2xl">
-            <span class="material-symbols-outlined text-4xl text-primary mb-4">verified</span>
-            <h3 class="text-xl font-bold text-on-surface mb-2">¿Enviar para Revisión Final?</h3>
-            <p class="text-on-surface/60 text-sm mb-6">Asegúrate de haber subido las fotos finales en el último avance. El cliente deberá aprobar el diseño para finalizar el pedido.</p>
-            <div class="flex gap-3">
-                <button class="close-modal flex-1 py-2 text-on-surface/60 hover:text-on-surface">Cancelar</button>
-                <button id="confirm-final" class="flex-1 py-2 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 shadow-lg shadow-primary/20">Enviar</button>
+        <!--Final Review Modal-->
+        <div id="modal-final" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden backdrop-blur-sm">
+            <div class="bg-surface p-6 rounded-xl border border-white/10 max-w-md w-full text-center shadow-2xl">
+                <span class="material-symbols-outlined text-4xl text-primary mb-4">verified</span>
+                <h3 class="text-xl font-bold text-on-surface mb-2">¿Enviar para Revisión Final?</h3>
+                <p class="text-on-surface/60 text-sm mb-6">Asegúrate de haber subido las fotos finales en el último avance. El cliente deberá aprobar el diseño para finalizar el pedido.</p>
+                <div class="flex gap-3">
+                    <button class="close-modal flex-1 py-2 text-on-surface/60 hover:text-on-surface">Cancelar</button>
+                    <button id="confirm-final" class="flex-1 py-2 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 shadow-lg shadow-primary/20">Enviar</button>
+                </div>
             </div>
         </div>
-    </div>
-`;
+    `;
 }
 
 function setupMakerModals(order) {
@@ -489,8 +512,32 @@ function setupMakerModals(order) {
     });
 
     document.getElementById('confirm-accept')?.addEventListener('click', async () => {
-        const { error } = await supabase.from('orders').update({ status: 'accepted' }).eq('id', order.id);
-        if (!error) window.location.reload();
+        const price = document.getElementById('quote-price').value;
+        if (!price || price <= 0) {
+            alert('Por favor ingresa un precio válido.');
+            return;
+        }
+
+        const btn = document.getElementById('confirm-accept');
+        btn.innerText = 'Enviando...';
+        btn.disabled = true;
+
+        const { error } = await supabase
+            .from('orders')
+            .update({
+                status: 'accepted',
+                price: parseFloat(price),
+                payment_status: 'unpaid' // Ensure it starts unpaid
+            })
+            .eq('id', order.id);
+
+        if (!error) {
+            window.location.reload();
+        } else {
+            alert('Error al enviar cotización');
+            btn.innerText = 'Enviar Cotización';
+            btn.disabled = false;
+        }
     });
 
     // Update Logic

@@ -18,6 +18,8 @@ create table public.profiles (
   plan text check (plan in ('free', 'basic', 'premium', 'pro')) default 'free',
   avatar_url text,
   bio text,
+  phone text,
+  address text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -158,3 +160,25 @@ create policy "Anyone can upload a design preview." on storage.objects for inser
 
 create policy "Chat images are accessible by authenticated users." on storage.objects for select using ( bucket_id = 'chat-images' and auth.role() = 'authenticated' );
 create policy "Authenticated users can upload chat images." on storage.objects for insert with check ( bucket_id = 'chat-images' and auth.role() = 'authenticated' );
+
+-- RATINGS TABLE
+create table public.ratings (
+  id uuid default uuid_generate_v4() primary key,
+  order_id uuid references public.orders(id) not null,
+  maker_id uuid references public.profiles(id) not null,
+  client_id uuid references public.profiles(id) not null,
+  rating integer check (rating >= 1 and rating <= 5) not null,
+  comment text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Enable RLS on ratings
+alter table public.ratings enable row level security;
+
+create policy "Ratings are viewable by everyone."
+  on ratings for select
+  using ( true );
+
+create policy "Clients can insert ratings for their orders."
+  on ratings for insert
+  with check ( auth.uid() = client_id );

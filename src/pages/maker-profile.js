@@ -53,10 +53,10 @@ export function MakerProfilePage() {
             .select('*')
             .eq('maker_id', maker.id);
 
-        // Fetch Reviews
+        // Fetch Ratings
         const { data: reviews } = await supabase
-            .from('reviews')
-            .select('*, client:profiles!client_id(full_name)')
+            .from('ratings')
+            .select('*, client:profiles!client_id(full_name, avatar_url)')
             .eq('maker_id', maker.id)
             .order('created_at', { ascending: false });
 
