@@ -291,20 +291,14 @@ Las contribuciones son bienvenidas. Por favor:
 
 ---
 
-## 📝 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
-
----
-
 ## 👨‍💻 Autor
 
-**Francisco Aroni Muñoz**
-**Abraham Marquina Laguna**
+- Francisco Aroni Muñoz
+- Abraham Marquina Laguna
 
 ## Codigos de estudiantes
-**Francisco Aroni Muñoz : 000261414**
-**Abraham Marquina Laguna:000258070**
+- Francisco Aroni Muñoz : 000261414
+- Abraham Marquina Laguna:000258070
 
 - GitHub: [@franciscoam2328](https://github.com/franciscoam2328)
 
@@ -321,6 +315,4 @@ Y, por supuesto, no podemos olvidarnos de las herramientas que hicieron menos do
 - **Supabase**, por tener documentación tan clara que hasta nos sentimos expertos.  
 - **Tailwind CSS**, por permitir que una interfaz decente salga incluso cuando el diseñador del grupo está durmiendo.  
 - **Vercel**, por ese hosting gratuito que siempre cae como bendición estudiantil.  
-- Y a los **confeccionistas peruanos**, porque su creatividad nos inspiró… y porque sin ellos no tendríamos a quién mostrarle esta idea brillante (según nosotros).
-
-
+---
