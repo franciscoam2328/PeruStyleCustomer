@@ -70,7 +70,7 @@ export function ProfilePage() {
                             <span class="material-symbols-outlined">inventory_2</span>
                             <p class="text-sm font-medium">Mis Pedidos</p>
                         </a>
-                        <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-text-dark-secondary hover:bg-white/5 hover:text-secondary transition-colors" href="/makers">
+                        <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-text-dark-secondary hover:bg-white/5 hover:text-secondary transition-colors" href="/explore-makers">
                             <span class="material-symbols-outlined">store</span>
                             <p class="text-sm font-medium">Explorar</p>
                         </a>

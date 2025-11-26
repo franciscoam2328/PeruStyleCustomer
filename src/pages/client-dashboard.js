@@ -1,5 +1,6 @@
 import { getCurrentUser, signOut } from '../js/auth.js';
 import { supabase } from '../js/supabase.js';
+import { getLogo } from '../components/logo.js';
 
 export function ClientDashboardPage() {
     setTimeout(async () => {
@@ -38,18 +39,27 @@ export function ClientDashboardPage() {
             .limit(2);
 
         // Update UI with data
-        document.getElementById('designs-count').textContent = designsCount || 0;
-        document.getElementById('orders-count').textContent = ordersCount || 0;
-        document.getElementById('user-name').textContent = profile?.full_name || user.email.split('@')[0];
-        document.getElementById('user-plan').textContent = `Plan ${profile?.plan || 'Free'}`;
+        const designsCountEl = document.getElementById('designs-count');
+        if (designsCountEl) designsCountEl.textContent = designsCount || 0;
+
+        const ordersCountEl = document.getElementById('orders-count');
+        if (ordersCountEl) ordersCountEl.textContent = ordersCount || 0;
+
+        const userNameEl = document.getElementById('user-name');
+        if (userNameEl) userNameEl.textContent = profile?.full_name || user.email.split('@')[0];
+
+        const userPlanEl = document.getElementById('user-plan');
+        if (userPlanEl) userPlanEl.textContent = `Plan ${profile?.plan || 'Free'}`;
 
         // Update avatar
         const avatarEl = document.getElementById('user-avatar');
-        if (profile?.avatar_url) {
-            avatarEl.innerHTML = `<img src="${profile.avatar_url}" class="w-full h-full object-cover rounded-full" alt="Avatar">`;
-        } else {
-            const initial = (profile?.full_name || user.email)[0].toUpperCase();
-            avatarEl.textContent = initial;
+        if (avatarEl) {
+            if (profile?.avatar_url) {
+                avatarEl.innerHTML = `<img src="${profile.avatar_url}" class="w-full h-full object-cover rounded-full" alt="Avatar">`;
+            } else {
+                const initial = (profile?.full_name || user.email)[0].toUpperCase();
+                avatarEl.textContent = initial;
+            }
         }
 
         // Helper function to get emoji based on garment type
@@ -66,7 +76,7 @@ export function ClientDashboardPage() {
 
         // Render designs
         const designsContainer = document.getElementById('designs-grid');
-        if (designs && designs.length > 0) {
+        if (designsContainer && designs && designs.length > 0) {
             designs.forEach(design => {
                 const card = document.createElement('div');
                 card.className = 'group bg-surface rounded-xl border border-white/10 overflow-hidden transition-all duration-300 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10';
@@ -136,7 +146,7 @@ export function ClientDashboardPage() {
         }
 
         // Logout handler
-        document.getElementById('logout-btn').addEventListener('click', async () => {
+        document.getElementById('logout-btn')?.addEventListener('click', async () => {
             await signOut();
             window.location.href = '/login';
         });
@@ -145,45 +155,47 @@ export function ClientDashboardPage() {
     return `
     <div class="flex min-h-screen bg-base text-on-surface">
         <!-- Sidebar -->
-        <aside class="w-64 flex-shrink-0 bg-base border-r border-surface/50 p-4 flex flex-col justify-between">
+        <aside class="w-64 flex-shrink-0 bg-base border-r border-surface/50 p-4 flex flex-col justify-between hidden md:flex sticky top-0 h-screen">
             <div class="flex flex-col gap-8">
-                <div class="px-3">
-                    <h1 class="text-2xl font-bold text-on-surface">Peru<span class="text-primary">Style</span></h1>
+                <div class="px-3 flex justify-center">
+                    <a href="/client-dashboard">
+                        ${getLogo({ width: "160", height: "45" })}
+                    </a>
                 </div>
                 <nav class="flex flex-col gap-2">
                     <a href="/client-dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-surface hover:bg-primary/20 transition-colors duration-200 group">
-                        <span class="text-2xl">📊</span>
+                        <span class="material-symbols-outlined text-xl group-hover:text-primary transition-colors">grid_view</span>
                         <p class="text-on-surface text-sm font-medium">Dashboard</p>
                     </a>
                     <a href="/my-designs" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
-                        <span class="text-2xl">📁</span>
+                        <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">design_services</span>
                         <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Mis Diseños</p>
                     </a>
                     <a href="/orders" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
-                        <span class="text-2xl">📦</span>
+                        <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">inventory_2</span>
                         <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Mis Pedidos</p>
                     </a>
-                    <a href="/makers" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
-                        <span class="text-2xl">👥</span>
+                    <a href="/explore-makers" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                        <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">storefront</span>
                         <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Explorar</p>
                     </a>
                     <a href="/chat" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
-                        <span class="text-2xl">💬</span>
+                        <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">chat_bubble_outline</span>
                         <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Chat</p>
                     </a>
                     <a href="/profile" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
-                        <span class="text-2xl">👤</span>
+                        <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">person</span>
                         <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Mi Perfil</p>
                     </a>
                     <a href="/plans" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
-                        <span class="text-2xl">⭐</span>
+                        <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">workspace_premium</span>
                         <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Mi Suscripción</p>
                     </a>
                 </nav>
             </div>
             <div class="flex flex-col gap-1">
                 <button id="logout-btn" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group text-left w-full">
-                    <span class="text-2xl">🚪</span>
+                    <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-red-500 transition-colors">logout</span>
                     <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Cerrar sesión</p>
                 </button>
             </div>
@@ -193,13 +205,13 @@ export function ClientDashboardPage() {
         <main class="flex-1 p-8 overflow-y-auto">
             <div class="max-w-7xl mx-auto">
                 <!-- Header -->
-                <header class="flex justify-end items-center gap-6 mb-8">
-                    <button class="relative p-2 text-on-surface/80 hover:text-on-surface transition-colors">
-                        <span class="text-2xl">🔔</span>
-                        <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full"></span>
+                <header class="flex justify-end items-center gap-6 mb-8 bg-surface p-4 rounded-xl border border-white/10 shadow-sm">
+                    <button class="relative p-2 text-on-surface/80 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined text-2xl">notifications</span>
+                        <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
                     </button>
-                    <a href="/profile" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                        <div id="user-avatar" class="bg-gradient-to-br from-primary to-secondary rounded-full w-10 h-10 flex items-center justify-center text-white font-bold">
+                    <a href="/profile" class="flex items-center gap-3 hover:opacity-80 transition-opacity border-l border-white/10 pl-6">
+                        <div id="user-avatar" class="bg-gradient-to-br from-primary to-secondary rounded-full w-10 h-10 flex items-center justify-center text-white font-bold shadow-md">
                             U
                         </div>
                         <div class="flex flex-col text-right">
@@ -212,7 +224,7 @@ export function ClientDashboardPage() {
                 <!-- Dashboard Section -->
                 <section>
                     <h2 class="text-3xl font-bold text-on-surface mb-6">Dashboard</h2>
-                    
+
                     <!-- Stats Cards -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                         <div class="flex flex-col gap-2 rounded-xl p-6 bg-surface border border-white/10">

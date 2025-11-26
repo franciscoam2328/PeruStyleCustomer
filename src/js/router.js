@@ -15,6 +15,8 @@ import { MakerProfileEditPage } from '../pages/maker-profile-edit.js';
 import { MakerPortfolioPage } from '../pages/maker-portfolio.js';
 import { MakerPlansPage } from '../pages/maker-plans.js';
 import { NotificationsPage } from '../pages/notifications.js';
+import { ExploreMakersPage } from '../pages/explore-makers.js';
+import { DesignToolPage } from '../pages/design-tool.js';
 import { Navbar } from '../components/navbar.js';
 
 const routes = {
@@ -34,7 +36,9 @@ const routes = {
     '/plans': PlansPage,
     '/profile': ProfilePage,
     '/client-dashboard': ClientDashboardPage,
-    '/my-designs': MyDesignsPage
+    '/my-designs': MyDesignsPage,
+    '/explore-makers': ExploreMakersPage,
+    '/design-tool': DesignToolPage
 };
 
 export async function router() {
@@ -67,8 +71,9 @@ export async function router() {
             '/profile',
             '/orders',
             '/chat',
-            '/makers',
-            '/maker-profile'
+            '/maker-profile',
+            '/explore-makers',
+            '/design-tool'
         ];
         const shouldShowNavbar = !dashboardRoutes.includes(cleanPath);
 

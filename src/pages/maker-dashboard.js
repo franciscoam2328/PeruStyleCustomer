@@ -1,5 +1,6 @@
 import { supabase } from '../js/supabase.js';
 import { getCurrentUser, signOut } from '../js/auth.js';
+import { getLogo } from '../components/logo.js';
 
 export async function MakerDashboardPage() {
     const user = await getCurrentUser();
@@ -18,10 +19,10 @@ export async function MakerDashboardPage() {
 
     if (profile?.role !== 'maker') {
         return `
-        <div class="flex min-h-screen items-center justify-center bg-background-dark text-white">
+        <div class="flex min-h-screen items-center justify-center bg-base text-on-surface">
             <div class="text-center">
                 <h2 class="text-2xl font-bold text-red-500 mb-4">Acceso Restringido</h2>
-                <p class="text-gray-400 mb-6">Esta página es solo para confeccionistas registrados.</p>
+                <p class="text-on-surface/60 mb-6">Esta página es solo para confeccionistas registrados.</p>
                 <a href="/" class="px-6 py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 transition-colors">Volver al Inicio</a>
             </div>
         </div>
@@ -67,117 +68,118 @@ export async function MakerDashboardPage() {
     }, 0);
 
     return `
-    <div class="flex min-h-screen w-full bg-background-dark font-display text-text-beige">
+    <div class="flex min-h-screen w-full bg-base font-display text-on-surface">
         <!-- Sidebar -->
-        <nav class="w-64 flex-shrink-0 bg-sidebar-dark border-r border-white/5 p-4 flex flex-col justify-between hidden md:flex">
-            <div class="flex flex-col gap-4">
-                <div class="flex items-center gap-3 p-2">
-                    <div class="w-10 h-10 rounded-full bg-accent-gold/20 flex items-center justify-center overflow-hidden border border-accent-gold/30">
-                        ${profile.avatar_url ? `<img src="${profile.avatar_url}" class="w-full h-full object-cover">` : '<span class="material-symbols-outlined text-accent-gold">checkroom</span>'}
-                    </div>
-                    <div class="flex flex-col">
-                        <h1 class="text-white text-sm font-bold leading-normal">${profile.full_name || 'Confeccionista'}</h1>
-                        <p class="text-accent-gold text-xs font-medium uppercase tracking-wider">${profile.plan || 'Free'}</p>
-                    </div>
+        <aside class="w-64 flex-shrink-0 bg-base border-r border-surface/50 p-4 flex flex-col justify-between hidden md:flex sticky top-0 h-screen z-20">
+            <div class="flex flex-col gap-8">
+                <div class="px-3 flex justify-center">
+                    <a href="/maker-dashboard">
+                        ${getLogo({ width: "160", height: "45" })}
+                    </a>
                 </div>
                 
-                <div class="flex flex-col gap-1">
-                    <a class="relative flex items-center gap-4 rounded-lg bg-accent-gold/10 px-4 py-2.5 text-sm font-bold text-accent-gold shadow-gold-glow-soft" href="/maker-dashboard">
-                        <span class="absolute left-0 h-6 w-1 rounded-r-full bg-accent-gold"></span>
-                        <span class="material-symbols-outlined text-xl">dashboard</span>
-                        Dashboard
+                <nav class="flex flex-col gap-2">
+                    <a href="/maker-dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-surface hover:bg-primary/20 transition-colors duration-200 group">
+                        <span class="material-symbols-outlined text-xl group-hover:text-primary transition-colors">dashboard</span>
+                        <p class="text-on-surface text-sm font-medium">Dashboard</p>
                     </a>
-                    <a class="flex items-center gap-4 rounded-lg px-4 py-2.5 text-sm font-medium text-text-beige-muted transition-all hover:text-accent-gold hover:bg-white/5" href="/maker-orders">
-                        <span class="material-symbols-outlined text-xl">inventory_2</span>
-                        Pedidos
+                    <a href="/maker-orders" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                        <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">inventory_2</span>
+                        <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Pedidos</p>
                         ${pendingOrders > 0 ? `<span class="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">${pendingOrders}</span>` : ''}
                     </a>
-                    <a class="flex items-center gap-4 rounded-lg px-4 py-2.5 text-sm font-medium text-text-beige-muted transition-all hover:text-accent-gold hover:bg-white/5" href="/maker-profile-edit">
-                        <span class="material-symbols-outlined text-xl">person_edit</span>
-                        Mi Perfil
+                    <a href="/maker-profile" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                        <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">person</span>
+                        <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Mi Perfil</p>
                     </a>
-                    <a class="flex items-center gap-4 rounded-lg px-4 py-2.5 text-sm font-medium text-text-beige-muted transition-all hover:text-accent-gold hover:bg-white/5" href="/maker-portfolio">
-                        <span class="material-symbols-outlined text-xl">photo_library</span>
-                        Portafolio
+                    <a href="/chat" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                        <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">chat_bubble_outline</span>
+                        <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Chat</p>
                     </a>
-                    <a class="flex items-center gap-4 rounded-lg px-4 py-2.5 text-sm font-medium text-text-beige-muted transition-all hover:text-accent-gold hover:bg-white/5" href="/chat">
-                        <span class="material-symbols-outlined text-xl">chat</span>
-                        Mensajes
+                    <a href="/maker-plans" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                        <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">workspace_premium</span>
+                        <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Mi Suscripción</p>
                     </a>
-                    <a class="flex items-center gap-4 rounded-lg px-4 py-2.5 text-sm font-medium text-text-beige-muted transition-all hover:text-accent-gold hover:bg-white/5" href="/maker-plans">
-                        <span class="material-symbols-outlined text-xl">workspace_premium</span>
-                        Suscripción
-                    </a>
-                </div>
+                </nav>
             </div>
             <div class="flex flex-col gap-1">
-                <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors text-text-beige-muted hover:text-accent-copper" href="/logout" id="logout-btn">
-                    <span class="material-symbols-outlined">logout</span>
-                    <p class="text-sm font-medium leading-normal">Cerrar sesión</p>
-                </a>
+                <button id="logout-btn" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group text-left w-full">
+                    <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-red-500 transition-colors">logout</span>
+                    <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Cerrar sesión</p>
+                </button>
             </div>
-        </nav>
+        </aside>
 
         <!-- Main Content -->
         <main class="flex-1 p-8 overflow-y-auto">
             <div class="max-w-7xl mx-auto">
                 <!-- Header -->
-                <header class="flex justify-between items-center mb-8">
+                <header class="flex justify-between items-center mb-8 bg-surface p-4 rounded-xl border border-white/10 shadow-sm">
                     <div>
-                        <h1 class="text-3xl font-black text-white mb-1">Panel Principal</h1>
-                        <p class="text-text-beige-muted">Bienvenido de nuevo, ${profile.full_name?.split(' ')[0] || 'Maker'}.</p>
+                        <h1 class="text-3xl font-black text-on-surface mb-1">Panel Principal</h1>
+                        <p class="text-on-surface/60">Bienvenido de nuevo, ${profile.full_name?.split(' ')[0] || 'Maker'}.</p>
                     </div>
-                    <div class="flex gap-3">
-                        <button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-card-dark border border-white/10 text-text-beige hover:bg-white/5 transition-colors">
-                            <span class="material-symbols-outlined text-xl">notifications</span>
+                    <div class="flex items-center gap-6">
+                        <button class="relative p-2 text-on-surface/80 hover:text-primary transition-colors">
+                            <span class="material-symbols-outlined text-2xl">notifications</span>
+                            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
                         </button>
+                        <a href="/maker-profile" class="flex items-center gap-3 hover:opacity-80 transition-opacity border-l border-white/10 pl-6">
+                            <div class="bg-gradient-to-br from-primary to-secondary rounded-full w-10 h-10 flex items-center justify-center text-white font-bold shadow-md overflow-hidden">
+                                ${profile.avatar_url ? `<img src="${profile.avatar_url}" class="w-full h-full object-cover">` : (profile.full_name || 'M')[0].toUpperCase()}
+                            </div>
+                            <div class="flex flex-col text-right">
+                                <h2 class="text-base font-semibold text-on-surface leading-tight">${profile.full_name || 'Confeccionista'}</h2>
+                                <p class="text-primary text-sm font-medium leading-tight uppercase">Plan ${profile.plan || 'Free'}</p>
+                            </div>
+                        </a>
                     </div>
                 </header>
 
                 <!-- Stats Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     <!-- Card 1: Pending -->
-                    <div class="bg-card-dark p-6 rounded-xl border border-white/5 relative overflow-hidden group hover:border-accent-gold/30 transition-all">
+                    <div class="bg-surface p-6 rounded-xl border border-white/10 relative overflow-hidden group hover:border-primary/50 transition-all shadow-lg">
                         <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <span class="material-symbols-outlined text-6xl text-accent-gold">pending_actions</span>
+                            <span class="material-symbols-outlined text-6xl text-primary">pending_actions</span>
                         </div>
-                        <p class="text-text-beige-muted text-sm font-medium mb-1">Solicitudes Pendientes</p>
-                        <h3 class="text-3xl font-bold text-white mb-2">${pendingOrders || 0}</h3>
-                        <a href="/maker-orders?status=pending" class="text-xs text-accent-gold hover:underline flex items-center gap-1">
+                        <p class="text-on-surface/60 text-sm font-medium mb-1">Solicitudes Pendientes</p>
+                        <h3 class="text-3xl font-bold text-on-surface mb-2">${pendingOrders || 0}</h3>
+                        <a href="/maker-orders?status=pending" class="text-xs text-primary hover:underline flex items-center gap-1">
                             Ver solicitudes <span class="material-symbols-outlined text-sm">arrow_forward</span>
                         </a>
                     </div>
 
                     <!-- Card 2: Active -->
-                    <div class="bg-card-dark p-6 rounded-xl border border-white/5 relative overflow-hidden group hover:border-blue-500/30 transition-all">
+                    <div class="bg-surface p-6 rounded-xl border border-white/10 relative overflow-hidden group hover:border-blue-500/50 transition-all shadow-lg">
                         <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                             <span class="material-symbols-outlined text-6xl text-blue-500">precision_manufacturing</span>
                         </div>
-                        <p class="text-text-beige-muted text-sm font-medium mb-1">Pedidos en Curso</p>
-                        <h3 class="text-3xl font-bold text-white mb-2">${activeOrders || 0}</h3>
+                        <p class="text-on-surface/60 text-sm font-medium mb-1">Pedidos en Curso</p>
+                        <h3 class="text-3xl font-bold text-on-surface mb-2">${activeOrders || 0}</h3>
                         <a href="/maker-orders?status=active" class="text-xs text-blue-400 hover:underline flex items-center gap-1">
                             Gestionar activos <span class="material-symbols-outlined text-sm">arrow_forward</span>
                         </a>
                     </div>
 
                     <!-- Card 3: Total -->
-                    <div class="bg-card-dark p-6 rounded-xl border border-white/5 relative overflow-hidden group hover:border-green-500/30 transition-all">
+                    <div class="bg-surface p-6 rounded-xl border border-white/10 relative overflow-hidden group hover:border-green-500/50 transition-all shadow-lg">
                         <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                             <span class="material-symbols-outlined text-6xl text-green-500">check_circle</span>
                         </div>
-                        <p class="text-text-beige-muted text-sm font-medium mb-1">Total Atendidos</p>
-                        <h3 class="text-3xl font-bold text-white mb-2">${totalOrders || 0}</h3>
+                        <p class="text-on-surface/60 text-sm font-medium mb-1">Total Atendidos</p>
+                        <h3 class="text-3xl font-bold text-on-surface mb-2">${totalOrders || 0}</h3>
                         <span class="text-xs text-green-500 font-medium">+2 esta semana</span>
                     </div>
 
                     <!-- Card 4: Rating -->
-                    <div class="bg-card-dark p-6 rounded-xl border border-white/5 relative overflow-hidden group hover:border-yellow-500/30 transition-all">
+                    <div class="bg-surface p-6 rounded-xl border border-white/10 relative overflow-hidden group hover:border-yellow-500/50 transition-all shadow-lg">
                         <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                             <span class="material-symbols-outlined text-6xl text-yellow-500">star</span>
                         </div>
-                        <p class="text-text-beige-muted text-sm font-medium mb-1">Calificación Promedio</p>
+                        <p class="text-on-surface/60 text-sm font-medium mb-1">Calificación Promedio</p>
                         <div class="flex items-center gap-2 mb-2">
-                            <h3 class="text-3xl font-bold text-white">4.8</h3>
+                            <h3 class="text-3xl font-bold text-on-surface">4.8</h3>
                             <div class="flex text-yellow-500">
                                 <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1">star</span>
                                 <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1">star</span>
@@ -186,37 +188,37 @@ export async function MakerDashboardPage() {
                                 <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1">star_half</span>
                             </div>
                         </div>
-                        <a href="/maker-profile-edit" class="text-xs text-text-beige-muted hover:text-white hover:underline">Ver reseñas</a>
+                        <a href="/maker-profile" class="text-xs text-on-surface/60 hover:text-on-surface hover:underline">Ver reseñas</a>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <!-- Recent Orders List -->
-                    <div class="lg:col-span-2 bg-card-dark rounded-xl border border-white/5 overflow-hidden">
-                        <div class="p-6 border-b border-white/5 flex justify-between items-center">
-                            <h3 class="text-lg font-bold text-white">Pedidos Recientes</h3>
-                            <a href="/maker-orders" class="text-sm text-accent-gold hover:underline">Ver todos</a>
+                    <div class="lg:col-span-2 bg-surface rounded-xl border border-white/10 overflow-hidden shadow-lg">
+                        <div class="p-6 border-b border-white/10 flex justify-between items-center">
+                            <h3 class="text-lg font-bold text-on-surface">Pedidos Recientes</h3>
+                            <a href="/maker-orders" class="text-sm text-primary hover:underline">Ver todos</a>
                         </div>
-                        <div class="divide-y divide-white/5">
+                        <div class="divide-y divide-white/10">
                             ${recentOrders && recentOrders.length > 0 ? recentOrders.map(order => `
                                 <div class="p-4 flex items-center gap-4 hover:bg-white/5 transition-colors">
                                     <div class="w-12 h-12 rounded-lg bg-center bg-cover bg-no-repeat bg-gray-800" style="background-image: url('${order.designs?.preview_url || ''}')"></div>
                                     <div class="flex-1">
-                                        <h4 class="text-white font-bold text-sm">${order.designs?.name || 'Diseño'}</h4>
-                                        <p class="text-text-beige-muted text-xs">Cliente: ${order.profiles?.full_name || 'Usuario'}</p>
+                                        <h4 class="text-on-surface font-bold text-sm">${order.designs?.name || 'Diseño'}</h4>
+                                        <p class="text-on-surface/60 text-xs">Cliente: ${order.profiles?.full_name || 'Usuario'}</p>
                                     </div>
                                     <div class="text-right">
                                         <span class="px-2 py-1 rounded text-xs font-bold ${getStatusColor(order.status)}">
                                             ${getStatusLabel(order.status)}
                                         </span>
-                                        <p class="text-text-beige-muted text-xs mt-1">${new Date(order.created_at).toLocaleDateString()}</p>
+                                        <p class="text-on-surface/60 text-xs mt-1">${new Date(order.created_at).toLocaleDateString()}</p>
                                     </div>
-                                    <a href="/maker-orders?id=${order.id}" class="p-2 text-text-beige-muted hover:text-white">
+                                    <a href="/maker-orders?id=${order.id}" class="p-2 text-on-surface/60 hover:text-on-surface">
                                         <span class="material-symbols-outlined">chevron_right</span>
                                     </a>
                                 </div>
                             `).join('') : `
-                                <div class="p-8 text-center text-text-beige-muted">
+                                <div class="p-8 text-center text-on-surface/60">
                                     <span class="material-symbols-outlined text-4xl mb-2 opacity-50">inbox</span>
                                     <p>No hay pedidos recientes.</p>
                                 </div>
@@ -226,24 +228,24 @@ export async function MakerDashboardPage() {
 
                     <!-- Quick Actions -->
                     <div class="space-y-6">
-                        <div class="bg-gradient-to-br from-accent-gold/20 to-accent-copper/10 rounded-xl p-6 border border-accent-gold/20">
-                            <h3 class="text-white font-bold mb-2">Mejora tu Plan</h3>
-                            <p class="text-sm text-text-beige-muted mb-4">Accede a herramientas avanzadas y destaca en el directorio.</p>
-                            <button class="w-full py-2 rounded-lg bg-accent-gold text-black font-bold hover:bg-accent-gold/90 transition-colors text-sm" onclick="window.location.href='/maker-plans'">
+                        <div class="bg-gradient-to-br from-primary/20 to-secondary/10 rounded-xl p-6 border border-primary/20 shadow-lg">
+                            <h3 class="text-on-surface font-bold mb-2">Mejora tu Plan</h3>
+                            <p class="text-sm text-on-surface/60 mb-4">Accede a herramientas avanzadas y destaca en el directorio.</p>
+                            <button class="w-full py-2 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 transition-colors text-sm shadow-lg shadow-primary/20" onclick="window.location.href='/maker-plans'">
                                 Ver Planes
                             </button>
                         </div>
 
-                        <div class="bg-card-dark rounded-xl border border-white/5 p-6">
-                            <h3 class="text-white font-bold mb-4">Accesos Rápidos</h3>
+                        <div class="bg-surface rounded-xl border border-white/10 p-6 shadow-lg">
+                            <h3 class="text-on-surface font-bold mb-4">Accesos Rápidos</h3>
                             <div class="grid grid-cols-2 gap-3">
-                                <a href="/maker-profile-edit" class="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-center group">
-                                    <span class="material-symbols-outlined text-2xl text-accent-gold mb-1 group-hover:scale-110 transition-transform">person</span>
-                                    <p class="text-xs text-text-beige">Editar Perfil</p>
+                                <a href="/maker-profile" class="p-3 rounded-lg bg-base hover:bg-white/5 transition-colors text-center group border border-white/5">
+                                    <span class="material-symbols-outlined text-2xl text-primary mb-1 group-hover:scale-110 transition-transform">person</span>
+                                    <p class="text-xs text-on-surface">Editar Perfil</p>
                                 </a>
-                                <a href="/maker-portfolio" class="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-center group">
+                                <a href="/maker-portfolio" class="p-3 rounded-lg bg-base hover:bg-white/5 transition-colors text-center group border border-white/5">
                                     <span class="material-symbols-outlined text-2xl text-blue-400 mb-1 group-hover:scale-110 transition-transform">add_a_photo</span>
-                                    <p class="text-xs text-text-beige">Subir Foto</p>
+                                    <p class="text-xs text-on-surface">Subir Foto</p>
                                 </a>
                             </div>
                         </div>

@@ -1,5 +1,6 @@
 import { supabase } from '../js/supabase.js';
 import { getCurrentUser, signOut } from '../js/auth.js';
+import { getLogo } from '../components/logo.js';
 
 export function ChatPage() {
     let userProfile = null; // Store profile for sidebar rendering
@@ -41,8 +42,6 @@ export function ChatPage() {
 
         // Fetch conversations (unique users interacted with)
         async function fetchConversations() {
-            // This is a bit complex in standard SQL without a dedicated conversations table
-            // We'll fetch all messages involving the user and group them
             const { data: messages, error } = await supabase
                 .from('messages')
                 .select(`
@@ -61,7 +60,7 @@ export function ChatPage() {
             const convMap = new Map();
             messages.forEach(msg => {
                 const otherUser = msg.sender_id === user.id ? msg.receiver : msg.sender;
-                if (!otherUser) return; // Should not happen
+                if (!otherUser) return;
 
                 if (!convMap.has(otherUser.id)) {
                     convMap.set(otherUser.id, {
@@ -70,17 +69,15 @@ export function ChatPage() {
                         avatar: otherUser.avatar_url || 'https://via.placeholder.com/150',
                         lastMessage: msg.content,
                         time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        unread: (msg.receiver_id === user.id && !msg.is_read) ? 1 : 0, // Simple unread count logic
-                        online: false, // Need presence for this
+                        unread: (msg.receiver_id === user.id && !msg.is_read) ? 1 : 0,
+                        online: false,
                         messages: []
                     });
                 } else {
-                    // Accumulate unread count
                     if (msg.receiver_id === user.id && !msg.is_read) {
                         convMap.get(otherUser.id).unread++;
                     }
                 }
-                // Add message to conversation
                 convMap.get(otherUser.id).messages.unshift({
                     text: msg.content,
                     image: msg.image_url,
@@ -91,24 +88,14 @@ export function ChatPage() {
 
             conversations = Array.from(convMap.values());
 
-            // If starting a new chat with someone not in list
-            console.log('Recipient ID from URL:', recipientId);
-
             if (recipientId && !convMap.has(recipientId)) {
-                console.log('Fetching recipient profile for:', recipientId);
-                // Fetch recipient details
-                const { data: recipient, error: recipientError } = await supabase
+                const { data: recipient } = await supabase
                     .from('profiles')
                     .select('*')
                     .eq('id', recipientId)
                     .single();
 
-                if (recipientError) {
-                    console.error('Error fetching recipient:', recipientError);
-                }
-
                 if (recipient) {
-                    console.log('Recipient found:', recipient);
                     const newConv = {
                         id: recipient.id,
                         name: recipient.full_name || 'Usuario',
@@ -121,11 +108,8 @@ export function ChatPage() {
                     };
                     conversations.unshift(newConv);
                     activeChatUser = newConv;
-                } else {
-                    console.warn('Recipient not found in profiles.');
                 }
             } else if (recipientId && convMap.has(recipientId)) {
-                console.log('Recipient already in conversations.');
                 activeChatUser = convMap.get(recipientId);
             } else if (conversations.length > 0) {
                 activeChatUser = conversations[0];
@@ -134,8 +118,6 @@ export function ChatPage() {
             renderConversations();
             if (activeChatUser) {
                 renderChat();
-            } else {
-                console.log('No active chat user set.');
             }
         }
 
@@ -144,25 +126,25 @@ export function ChatPage() {
             if (!list) return;
 
             if (conversations.length === 0) {
-                list.innerHTML = '<div class="p-4 text-a-gray text-center">No tienes conversaciones.</div>';
+                list.innerHTML = '<div class="p-4 text-on-surface/60 text-center">No tienes conversaciones.</div>';
                 return;
             }
 
             list.innerHTML = conversations.map(c => `
-                <div class="conversation-item flex cursor-pointer gap-4 px-4 py-3 justify-between hover:bg-p-panel transition-colors duration-200 ${activeChatUser && c.id === activeChatUser.id ? 'bg-a-copper/20 border-l-2 border-a-gold' : 'border-l-2 border-transparent'}" data-id="${c.id}">
+                <div class="conversation-item flex cursor-pointer gap-4 px-4 py-3 justify-between hover:bg-surface transition-colors duration-200 ${activeChatUser && c.id === activeChatUser.id ? 'bg-surface border-l-4 border-primary' : 'border-l-4 border-transparent'}" data-id="${c.id}">
                     <div class="flex items-center gap-4">
                         <div class="relative">
-                            <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-14" style='background-image: url("${c.avatar}");'></div>
-                            ${c.online ? '<div class="absolute bottom-0 right-0 size-4 rounded-full bg-green-500 border-2 border-p-panel"></div>' : ''}
+                            <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-12 border border-white/10" style='background-image: url("${c.avatar}");'></div>
+                            ${c.online ? '<div class="absolute bottom-0 right-0 size-3 rounded-full bg-green-500 border-2 border-base"></div>' : ''}
                         </div>
                         <div class="flex flex-1 flex-col justify-center">
-                            <p class="text-a-beige text-base font-medium leading-normal">${c.name}</p>
-                            <p class="text-a-gold text-sm font-medium leading-normal truncate w-48">${c.lastMessage}</p>
+                            <p class="text-on-surface text-sm font-bold leading-normal">${c.name}</p>
+                            <p class="text-on-surface/60 text-xs font-medium leading-normal truncate w-40">${c.lastMessage}</p>
                         </div>
                     </div>
-                    <div class="shrink-0 flex flex-col items-end gap-2">
-                        <p class="text-a-gray text-xs font-normal">${c.time}</p>
-                        ${c.unread > 0 ? `<div class="flex size-6 items-center justify-center rounded-full bg-a-gold text-p-base text-xs font-bold">${c.unread}</div>` : ''}
+                    <div class="shrink-0 flex flex-col items-end gap-1">
+                        <p class="text-on-surface/40 text-[10px] font-normal">${c.time}</p>
+                        ${c.unread > 0 ? `<div class="flex size-5 items-center justify-center rounded-full bg-primary text-white text-[10px] font-bold">${c.unread}</div>` : ''}
                     </div>
                 </div>
             `).join('');
@@ -187,20 +169,20 @@ export function ChatPage() {
                 header.innerHTML = `
                     <div class="flex items-center gap-4">
                         <div class="relative">
-                            <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-12" style='background-image: url("${chat.avatar}");'></div>
-                            ${chat.online ? '<div class="absolute bottom-0 right-0 size-3.5 rounded-full bg-green-500 border-2 border-p-panel"></div>' : ''}
+                            <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border border-white/10" style='background-image: url("${chat.avatar}");'></div>
+                            ${chat.online ? '<div class="absolute bottom-0 right-0 size-3 rounded-full bg-green-500 border-2 border-base"></div>' : ''}
                         </div>
                         <div>
-                            <h2 class="text-lg font-semibold text-white">${chat.name}</h2>
-                            <p class="text-sm ${chat.online ? 'text-green-400' : 'text-gray-400'}">${chat.online ? 'En línea' : 'Desconectado'}</p>
+                            <h2 class="text-base font-bold text-on-surface">${chat.name}</h2>
+                            <p class="text-xs ${chat.online ? 'text-green-500' : 'text-on-surface/40'}">${chat.online ? 'En línea' : 'Desconectado'}</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-4 text-gray-400">
-                        <button class="p-2 rounded-full hover:bg-white/10 hover:text-white">
-                            <span class="material-symbols-outlined">call</span>
+                    <div class="flex items-center gap-2 text-on-surface/60">
+                        <button class="p-2 rounded-full hover:bg-surface hover:text-on-surface transition-colors">
+                            <span class="material-symbols-outlined text-xl">call</span>
                         </button>
-                        <button class="p-2 rounded-full hover:bg-white/10 hover:text-white">
-                            <span class="material-symbols-outlined">more_vert</span>
+                        <button class="p-2 rounded-full hover:bg-surface hover:text-on-surface transition-colors">
+                            <span class="material-symbols-outlined text-xl">more_vert</span>
                         </button>
                     </div>
                 `;
@@ -212,20 +194,20 @@ export function ChatPage() {
                 messagesContainer.innerHTML = chat.messages.map(m => {
                     if (m.sender === 'contact') {
                         return `
-                            <div class="flex items-end gap-3 max-w-lg">
-                                <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-8 shrink-0" style='background-image: url("${chat.avatar}");'></div>
-                                <div class="rounded-xl rounded-bl-none bg-[#2A2A2A] border border-white/10 px-4 py-3">
-                                    <p class="text-sm text-white">${m.text}</p>
-                                    <span class="text-xs text-gray-500 float-right ml-2 mt-1">${m.time}</span>
+                            <div class="flex items-end gap-3 max-w-[80%]">
+                                <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-8 shrink-0 border border-white/10" style='background-image: url("${chat.avatar}");'></div>
+                                <div class="rounded-2xl rounded-bl-none bg-white border border-gray-200 px-4 py-3 shadow-sm">
+                                    <p class="text-sm text-gray-800">${m.text}</p>
+                                    <span class="text-[10px] text-gray-400 float-right ml-2 mt-1">${m.time}</span>
                                 </div>
                             </div>
                         `;
                     } else {
                         return `
-                            <div class="flex items-end gap-3 self-end max-w-lg">
-                                <div class="rounded-xl rounded-br-none bg-orange-600 px-4 py-3 shadow-lg">
+                            <div class="flex items-end gap-3 self-end max-w-[80%]">
+                                <div class="rounded-2xl rounded-br-none bg-primary px-4 py-3 shadow-md">
                                     ${m.image ? `<img alt="Image" class="rounded-lg h-48 w-auto" src="${m.image}"/>` : `<p class="text-sm text-white font-medium">${m.text}</p>`}
-                                    <span class="text-xs text-white/70 float-right ml-2 mt-1">${m.time}</span>
+                                    <span class="text-[10px] text-white/60 float-right ml-2 mt-1">${m.time}</span>
                                 </div>
                             </div>
                         `;
@@ -243,7 +225,6 @@ export function ChatPage() {
             const text = input.value.trim();
             if (!text || !activeChatUser) return;
 
-            // Optimistic update
             const now = new Date();
             const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             activeChatUser.messages.push({ text, time, sender: 'me' });
@@ -253,7 +234,6 @@ export function ChatPage() {
             renderConversations();
             renderChat();
 
-            // Send to Supabase
             const { error } = await supabase
                 .from('messages')
                 .insert({
@@ -264,7 +244,6 @@ export function ChatPage() {
 
             if (error) {
                 console.error('Error sending message:', error);
-                // Revert optimistic update? For now just log
             }
         };
 
@@ -277,72 +256,72 @@ export function ChatPage() {
         realtimeChannel = supabase.channel('public:messages')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
                 const msg = payload.new;
-                // If message is for me or from me (though from me is handled optimistically, but good to sync)
                 if (msg.receiver_id === user.id || msg.sender_id === user.id) {
-                    // Refresh conversations to handle new messages properly
-                    // A more optimized way would be to just append, but full refresh ensures consistency
                     fetchConversations();
                 }
             })
             .subscribe();
 
-        // Initial fetch
         await fetchConversations();
 
     }, 0);
 
     return `
-    <div class="flex h-screen w-full text-a-beige bg-p-base font-display">
+    <div class="flex h-screen w-full bg-base font-display text-on-surface overflow-hidden">
         <!-- SideNavBar (Dynamic) -->
-        <div id="chat-sidebar">
+        <div id="chat-sidebar" class="hidden md:block">
             <!-- Will be populated based on user role -->
         </div>
+        
         <!-- Main Content -->
-        <main class="flex flex-1 overflow-hidden">
+        <main class="flex flex-1 overflow-hidden bg-base">
             <!-- A. Left Panel (Conversation List) -->
-            <div class="flex w-[380px] flex-col border-r border-white/10 bg-gradient-to-b from-p-base to-[#151515]">
-                <div class="p-4">
-                    <label class="flex flex-col min-w-40 h-12 w-full">
-                        <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
-                            <div class="text-a-gray flex border-none bg-p-panel items-center justify-center pl-4 rounded-l-lg border-r-0">
-                                <span class="material-symbols-outlined">search</span>
-                            </div>
-                            <input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-a-beige focus:outline-0 focus:ring-1 focus:ring-a-copper border-none bg-p-panel h-full placeholder:text-a-gray px-4 rounded-l-none border-l-0 pl-2 text-sm font-normal leading-normal" placeholder="Buscar en conversaciones..." value=""/>
-                        </div>
-                    </label>
-                </div>
-                <div class="flex-1 overflow-y-auto">
-                    <!-- ListItems -->
-                    <div class="flex flex-col" id="conversation-list">
-                            <span class="material-symbols-outlined">send</span>
-                        </button>
+            <div class="flex w-full md:w-[320px] lg:w-[360px] flex-col border-r border-surface/50 bg-base">
+                <div class="p-4 border-b border-surface/50">
+                    <h1 class="text-xl font-bold text-on-surface mb-4 md:hidden">Mensajes</h1>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface/40">search</span>
+                        <input class="w-full rounded-lg bg-surface border border-white/10 pl-10 pr-4 py-2 text-sm text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:ring-1 focus:ring-primary" placeholder="Buscar en conversaciones..." />
                     </div>
                 </div>
+                <div class="flex-1 overflow-y-auto" id="conversation-list">
+                    <!-- ListItems -->
+                </div>
             </div>
+            
             <!-- B. Right Panel (Main Chat) -->
-            <div class="flex flex-1 flex-col bg-[#1F1F1F] relative">
+            <div class="hidden md:flex flex-1 flex-col bg-surface/30 relative">
                 <!-- Chat Header -->
-                <header class="flex items-center justify-between border-b border-white/10 bg-[#1F1F1F] px-6 py-4" id="chat-header">
+                <header class="flex items-center justify-between border-b border-surface/50 bg-base px-6 py-4 shadow-sm z-10" id="chat-header">
                     <!-- Injected via JS -->
+                    <div class="flex items-center gap-4">
+                        <div class="h-10 w-10 rounded-full bg-surface animate-pulse"></div>
+                        <div class="space-y-2">
+                            <div class="h-4 w-32 bg-surface rounded animate-pulse"></div>
+                            <div class="h-3 w-20 bg-surface rounded animate-pulse"></div>
+                        </div>
+                    </div>
                 </header>
+                
                 <!-- Message Area -->
-                <div class="flex-1 overflow-y-auto p-6">
+                <div class="flex-1 overflow-y-auto p-6 bg-repeat" style="background-image: radial-gradient(#00000005 1px, transparent 1px); background-size: 20px 20px;">
                     <div class="flex flex-col gap-4" id="chat-messages">
                          <!-- Injected via JS -->
-                         <div class="flex flex-col items-center justify-center h-full text-gray-500">
+                         <div class="flex flex-col items-center justify-center h-full text-on-surface/40">
                             <span class="material-symbols-outlined text-6xl mb-4">chat</span>
                             <p>Selecciona una conversación para empezar.</p>
                          </div>
                     </div>
                 </div>
+                
                 <!-- Message Input -->
-                <div class="mt-auto bg-[#1F1F1F] p-4 border-t border-white/10">
-                    <div class="flex items-center gap-4">
-                        <button class="p-2 rounded-full text-gray-400 hover:bg-white/10 hover:text-white">
-                            <span class="material-symbols-outlined">add</span>
+                <div class="mt-auto bg-base p-4 border-t border-surface/50">
+                    <div class="flex items-center gap-4 max-w-4xl mx-auto">
+                        <button class="p-2 rounded-full text-on-surface/60 hover:bg-surface hover:text-primary transition-colors">
+                            <span class="material-symbols-outlined">add_circle</span>
                         </button>
-                        <input id="message-input" class="flex-1 rounded-lg border-none bg-[#2A2A2A] px-4 py-3 text-sm text-white placeholder-gray-500 focus:ring-1 focus:ring-orange-500" placeholder="Escribe un mensaje..." type="text"/>
-                        <button id="send-btn" class="flex items-center justify-center size-11 rounded-full bg-orange-600 text-white shadow-lg hover:bg-orange-500 transition-colors">
+                        <input id="message-input" class="flex-1 rounded-full border border-white/10 bg-surface px-6 py-3 text-sm text-on-surface placeholder-on-surface/40 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-sm" placeholder="Escribe un mensaje..." type="text"/>
+                        <button id="send-btn" class="flex items-center justify-center size-11 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 hover:scale-105 transition-all">
                             <span class="material-symbols-outlined">send</span>
                         </button>
                     </div>
@@ -356,43 +335,41 @@ export function ChatPage() {
 // Sidebar rendering helper functions
 function renderMakerSidebar(profile) {
     return `
-    <aside class="flex w-64 flex-col bg-p-sidebar p-4 border-r border-white/5">
-        <div class="mb-8 flex items-center gap-3">
-            <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" style="background-image: url('${profile.avatar_url || ''}'); background-color: rgba(212,175,55,0.2);">
-                ${!profile.avatar_url ? '<span class="material-symbols-outlined text-a-gold">checkroom</span>' : ''}
+    <aside class="w-64 flex-shrink-0 bg-base border-r border-surface/50 p-4 flex flex-col justify-between hidden md:flex sticky top-0 h-screen z-20">
+        <div class="flex flex-col gap-8">
+            <div class="px-3 flex justify-center">
+                <a href="/maker-dashboard">
+                    ${getLogo({ width: "160", height: "45" })}
+                </a>
             </div>
-            <div class="flex flex-col">
-                <h1 class="text-base font-medium leading-normal text-white">${profile.full_name || 'Confeccionista'}</h1>
-                <p class="text-sm font-normal leading-normal text-a-gold uppercase">${profile.plan || 'Free'}</p>
-            </div>
+            <nav class="flex flex-col gap-2">
+                <a href="/maker-dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                    <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">dashboard</span>
+                    <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Dashboard</p>
+                </a>
+                <a href="/maker-orders" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                    <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">inventory_2</span>
+                    <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Pedidos</p>
+                </a>
+                <a href="/maker-profile" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                    <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">person</span>
+                    <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Mi Perfil</p>
+                </a>
+                <a href="/chat" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-surface hover:bg-primary/20 transition-colors duration-200 group">
+                    <span class="material-symbols-outlined text-xl group-hover:text-primary transition-colors">chat_bubble_outline</span>
+                    <p class="text-on-surface text-sm font-medium">Chat</p>
+                </a>
+                <a href="/maker-plans" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                    <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">workspace_premium</span>
+                    <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Mi Suscripción</p>
+                </a>
+            </nav>
         </div>
-        <nav class="flex flex-1 flex-col gap-2">
-            <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-a-beige hover:bg-p-panel hover:text-a-gold transition-colors" href="/maker-dashboard">
-                <span class="material-symbols-outlined text-2xl">dashboard</span>
-                <p class="text-sm font-medium leading-normal">Dashboard</p>
-            </a>
-            <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-a-beige hover:bg-p-panel hover:text-a-gold transition-colors" href="/maker-orders">
-                <span class="material-symbols-outlined text-2xl">inventory_2</span>
-                <p class="text-sm font-medium leading-normal">Pedidos</p>
-            </a>
-            <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-a-beige hover:bg-p-panel hover:text-a-gold transition-colors" href="/maker-profile-edit">
-                <span class="material-symbols-outlined text-2xl">person_edit</span>
-                <p class="text-sm font-medium leading-normal">Mi Perfil</p>
-            </a>
-            <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-a-beige hover:bg-p-panel hover:text-a-gold transition-colors" href="/maker-portfolio">
-                <span class="material-symbols-outlined text-2xl">photo_library</span>
-                <p class="text-sm font-medium leading-normal">Portafolio</p>
-            </a>
-            <a class="flex items-center gap-3 rounded-lg bg-a-copper/20 px-3 py-2 text-a-gold shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-colors" href="/chat">
-                <span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">chat_bubble</span>
-                <p class="text-sm font-medium leading-normal">Chat</p>
-            </a>
-        </nav>
-        <div class="mt-auto">
-            <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-a-beige hover:bg-p-panel hover:text-a-gold transition-colors" href="/logout" id="logout-btn">
-                <span class="material-symbols-outlined text-2xl">logout</span>
-                <p class="text-sm font-medium leading-normal">Cerrar sesión</p>
-            </a>
+        <div class="flex flex-col gap-1">
+            <button id="logout-btn" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group text-left w-full">
+                <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-red-500 transition-colors">logout</span>
+                <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Cerrar sesión</p>
+            </button>
         </div>
     </aside>
     `;
@@ -400,53 +377,50 @@ function renderMakerSidebar(profile) {
 
 function renderClientSidebar(profile) {
     return `
-    <aside class="flex w-64 flex-col bg-p-sidebar p-4 border-r border-white/5">
-        <div class="mb-8 flex items-center gap-3">
-            <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 bg-primary/20 flex items-center justify-center text-primary font-bold">
-                ${profile.avatar_url ? `<img src="${profile.avatar_url}" class="w-full h-full rounded-full object-cover">` : 'U'}
+    <aside class="w-64 flex-shrink-0 bg-base border-r border-surface/50 p-4 flex flex-col justify-between hidden md:flex sticky top-0 h-screen z-20">
+        <div class="flex flex-col gap-8">
+            <div class="px-3 flex justify-center">
+                <a href="/client-dashboard">
+                    ${getLogo({ width: "160", height: "45" })}
+                </a>
             </div>
-            <div class="flex flex-col">
-                <h1 class="text-base font-medium leading-normal text-white">PeruStyle</h1>
-                <p class="text-sm font-normal leading-normal text-a-gray">Customer Dashboard</p>
-            </div>
+            <nav class="flex flex-col gap-2">
+                <a href="/client-dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                    <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">grid_view</span>
+                    <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Dashboard</p>
+                </a>
+                <a href="/my-designs" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                    <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">design_services</span>
+                    <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Mis Diseños</p>
+                </a>
+                <a href="/orders" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                    <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">inventory_2</span>
+                    <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Mis Pedidos</p>
+                </a>
+                <a href="/explore-makers" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                    <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">storefront</span>
+                    <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Explorar</p>
+                </a>
+                <a href="/chat" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-surface hover:bg-primary/20 transition-colors duration-200 group">
+                    <span class="material-symbols-outlined text-xl group-hover:text-primary transition-colors">chat_bubble_outline</span>
+                    <p class="text-on-surface text-sm font-medium">Chat</p>
+                </a>
+                <a href="/profile" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                    <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">person</span>
+                    <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Mi Perfil</p>
+                </a>
+                <a href="/plans" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group">
+                    <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-primary transition-colors">workspace_premium</span>
+                    <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Mi Suscripción</p>
+                </a>
+            </nav>
         </div>
-        <nav class="flex flex-1 flex-col gap-2">
-            <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-a-beige hover:bg-p-panel hover:text-a-gold transition-colors" href="/client-dashboard">
-                <span class="material-symbols-outlined text-2xl">dashboard</span>
-                <p class="text-sm font-medium leading-normal">Dashboard / Inicio</p>
-            </a>
-            <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-a-beige hover:bg-p-panel hover:text-a-gold transition-colors" href="/my-designs">
-                <span class="material-symbols-outlined text-2xl">design_services</span>
-                <p class="text-sm font-medium leading-normal">Mis Diseños</p>
-            </a>
-            <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-a-beige hover:bg-p-panel hover:text-a-gold transition-colors" href="/orders">
-                <span class="material-symbols-outlined text-2xl">inventory_2</span>
-                <p class="text-sm font-medium leading-normal">Mis Pedidos</p>
-            </a>
-            <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-a-beige hover:bg-p-panel hover:text-a-gold transition-colors" href="/makers">
-                <span class="material-symbols-outlined text-2xl">storefront</span>
-                <p class="text-sm font-medium leading-normal">Explorar</p>
-            </a>
-            <a class="flex items-center gap-3 rounded-lg bg-a-copper/20 px-3 py-2 text-a-gold shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-colors" href="/chat">
-                <span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">chat_bubble</span>
-                <p class="text-sm font-medium leading-normal">Chat</p>
-            </a>
-            <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-a-beige hover:bg-p-panel hover:text-a-gold transition-colors" href="/profile">
-                <span class="material-symbols-outlined text-2xl">person</span>
-                <p class="text-sm font-medium leading-normal">Mi Perfil</p>
-            </a>
-            <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-a-beige hover:bg-p-panel hover:text-a-gold transition-colors" href="/plans">
-                <span class="material-symbols-outlined text-2xl">credit_card</span>
-                <p class="text-sm font-medium leading-normal">Mi Suscripción</p>
-            </a>
-        </nav>
-        <div class="mt-auto">
-            <a class="flex items-center gap-3 rounded-lg px-3 py-2 text-a-beige hover:bg-p-panel hover:text-a-gold transition-colors" href="/logout" id="logout-btn">
-                <span class="material-symbols-outlined text-2xl">logout</span>
-                <p class="text-sm font-medium leading-normal">Cerrar sesión</p>
-            </a>
+        <div class="flex flex-col gap-1">
+            <button id="logout-btn" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200 group text-left w-full">
+                <span class="material-symbols-outlined text-xl text-on-surface/80 group-hover:text-red-500 transition-colors">logout</span>
+                <p class="text-on-surface/80 group-hover:text-on-surface text-sm font-medium">Cerrar sesión</p>
+            </button>
         </div>
     </aside>
     `;
 }
-
