@@ -1,6 +1,6 @@
-# PeruStyle 🇵🇪
+# PeruStyle ----G8
 
-**Plataforma de diseño y confección personalizada de prendas peruanas**
+**Plataforma web para la personalización y confección de prendas a pedido en Trujillo, Perú**
 
 PeruStyle es una aplicación web que conecta clientes con confeccionistas especializados en moda peruana. Los usuarios pueden diseñar prendas personalizadas en 3D, enviarlas a confeccionistas verificados, y gestionar todo el proceso de producción desde el pago hasta la entrega.
 
@@ -291,7 +291,7 @@ Las contribuciones son bienvenidas. Por favor:
 
 ---
 
-## 👨‍💻 Autor
+## 👨‍💻 Autor(es)
 
 - Francisco Aroni Muñoz
 - Abraham Marquina Laguna
