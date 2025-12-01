@@ -2,6 +2,7 @@
     "name": "perustyle",
     "version": "1.0.0",
     "description": "Plataforma de conexión entre clientes y confeccionistas",
+    "type": "module",
     "scripts": {
         "dev": "vite",
         "build": "vite build",
