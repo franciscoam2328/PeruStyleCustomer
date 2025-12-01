@@ -1,50 +1,13 @@
-<!DOCTYPE html>
-<html lang="es" class="">
+rel="stylesheet" />
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+<link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PeruStyle - Diseña y Confecciona</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries,typography"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
-        rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-
-    <!-- Tailwind Config (Sync with local config for CDN usage if needed) -->
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#000000",
-                        "background-light": "#ffffff",
-                        "background-dark": "#111827",
-                        "text-main": "#1f2937",
-                        "text-muted": "#6b7280",
-                        "accent-teal": "#a8dadc",
-                    },
-                    fontFamily: {
-                        display: ["Montserrat", "sans-serif"],
-                        sans: ["Montserrat", "sans-serif"],
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.25rem",
-                    },
-                },
-            },
-        };
-    </script>
-
-    <!-- PayPal SDK -->
-    <script
-        src="https://www.paypal.com/sdk/js?client-id=AT5cy3xCNp7j4EV2v4esQhHnxg8BIcjkcvVBGfXESOoxKI8UeB0dHd6p4XUAxo2gJ9Ns7jpNzpSOZrCB&currency=USD"></script>
-    <!-- Import map for Three.js -->
-    <script type="importmap">
+<!-- PayPal SDK -->
+<script
+    src="https://www.paypal.com/sdk/js?client-id=AT5cy3xCNp7j4EV2v4esQhHnxg8BIcjkcvVBGfXESOoxKI8UeB0dHd6p4XUAxo2gJ9Ns7jpNzpSOZrCB&currency=USD"></script>
+<!-- Import map for Three.js -->
+<script type="importmap">
         { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
     </script>
 </head>
@@ -52,10 +15,7 @@
 <body class="font-display bg-background-light text-text-main antialiased">
     <div id="nav"></div>
     <div id="app"></div>
-    <script type="module">
-        import { router } from './src/js/router.js';
-        document.addEventListener('DOMContentLoaded', () => router());
-    </script>
+    <script type="module" src="/src/js/main.js"></script>
     <style>
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;

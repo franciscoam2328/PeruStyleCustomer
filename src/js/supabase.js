@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from '@supabase/supabase-js';
 
 // NOTE: These should be environment variables in a real build process.
 // For now, we will use placeholders or expect them to be injected.
